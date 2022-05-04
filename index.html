@@ -176,7 +176,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-05-04 10:02:47 / 修改时间：11:26:42" itemprop="dateCreated datePublished" datetime="2022-05-04T10:02:47+08:00">2022-05-04</time>
+              <time title="创建时间：2022-05-04 10:02:47 / 修改时间：12:30:06" itemprop="dateCreated datePublished" datetime="2022-05-04T10:02:47+08:00">2022-05-04</time>
             </span>
 
           
@@ -194,7 +194,7 @@
 <h2 id="配置环境"><a href="#配置环境" class="headerlink" title="配置环境"></a>配置环境</h2><p>1.ndk<br>原文里大佬用的是ndk25.<br><a target="_blank" rel="noopener" href="https://dl.google.com/android/repository/android-ndk-r25-beta3-windows.zip">https://dl.google.com/android/repository/android-ndk-r25-beta3-windows.zip</a></p>
 <p>2.<a target="_blank" rel="noopener" href="https://github.com/mstorsjo/llvm-mingw">llvm-mingw64</a><br><a target="_blank" rel="noopener" href="https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip">https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip</a><br>解压后把</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...(你解压的文件夹)\llvm-mingw-20220323-ucrt-x86_64\bin</span><br></pre></td></tr></table></figure>
-<p>配到系统变量里,<strong>否则会提示找不到libc++.dll等</strong>.</p>
+<p>配到环境变量里,<strong>否则会提示找不到libc++.dll等</strong>.</p>
 <p>3.clang<br>下载大佬已经编译好的clang<br><a target="_blank" rel="noopener" href="https://gitee.com/qingyu_yyy/ollvm-project/attach_files/985049/download/clang-14.0.0.zip">https://gitee.com/qingyu_yyy/ollvm-project/attach_files/985049/download/clang-14.0.0.zip</a><br>解压后把clang.exe这个复制3份,分别命名为clang.exe,clang++.exe,clang-cl.exe.<br>粘贴到</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">...\android-ndk-r25-beta3\toolchains\llvm\prebuilt\windows-x86_64\bin\</span><br></pre></td></tr></table></figure>
 <p>里</p>
