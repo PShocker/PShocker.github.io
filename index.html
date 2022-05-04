@@ -151,6 +151,74 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/04/%E7%94%A8ollvm%E6%B7%B7%E6%B7%86native%E4%BB%A3%E7%A0%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/05/04/%E7%94%A8ollvm%E6%B7%B7%E6%B7%86native%E4%BB%A3%E7%A0%81/" class="post-title-link" itemprop="url">用ollvm混淆native代码</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-04 10:02:47 / 修改时间：10:34:50" itemprop="dateCreated datePublished" datetime="2022-05-04T10:02:47+08:00">2022-05-04</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>本文只是对<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_41923691/article/details/123258565">【清羽】Windows10下编译OLLVM-14.x</a>的用法做记录,不涉及任何原理分析.</p>
+<h2 id="配置环境"><a href="#配置环境" class="headerlink" title="配置环境"></a>配置环境</h2><p>1.ndk<br>原文里大佬用的是ndk25.<br><a target="_blank" rel="noopener" href="https://dl.google.com/android/repository/android-ndk-r25-beta3-windows.zip">https://dl.google.com/android/repository/android-ndk-r25-beta3-windows.zip</a></p>
+<p>2.<a target="_blank" rel="noopener" href="https://github.com/mstorsjo/llvm-mingw">llvm-mingw64</a><br><a target="_blank" rel="noopener" href="https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip">https://github.com/mstorsjo/llvm-mingw/releases/download/20220323/llvm-mingw-20220323-ucrt-x86_64.zip</a><br>解压后把<br>…(你解压的文件夹)\llvm-mingw-20220323-ucrt-x86_64\bin<br>配到系统变量里,<strong>否则会提示找不到libc++.dll等</strong>.</p>
+<p>3.clang<br>下载大佬已经编译好的clang<br><a target="_blank" rel="noopener" href="https://gitee.com/qingyu_yyy/ollvm-project/attach_files/985049/download/clang-14.0.0.zip">https://gitee.com/qingyu_yyy/ollvm-project/attach_files/985049/download/clang-14.0.0.zip</a><br>然后把这个复制3份,分别命名为clang.exe,clang++.exe,clang-cl.exe.<br>粘贴到<br>…\android-ndk-r25-beta3\toolchains\llvm\prebuilt\windows-x86_64\bin<br>里</p>
+<p>4.复制 lib 库<br>把<br>…\android-ndk-r25-beta3\toolchains\llvm\prebuilt\windows-x86_64\lib64\clang<br>复制到<br>…\android-ndk-r25-beta3\toolchains\llvm\prebuilt\windows-x86_64\lib<br>里.<br>然后把该文件夹的14.0.1改成14.0.0</p>
+<h2 id="编译使用"><a href="#编译使用" class="headerlink" title="编译使用"></a>编译使用</h2><p>1.Android.mk<br>加上<br>LOCAL_CFLAGS +&#x3D; -mllvm -sub -mllvm -bcf -mllvm -fla</p>
+<p>2.CMakeLists.txt</p>
+<p>set(CMAKE_CXX_FLAGS “-mllvm -fla -mllvm -sub -mllvm -sobf”)</p>
+<p>貌似在Android studio加上-mllvm -bcf编译卡死.<br>可以在外面ndk-build后拖进项目里.</p>
+<p><img src="/2022/05/04/%E7%94%A8ollvm%E6%B7%B7%E6%B7%86native%E4%BB%A3%E7%A0%81/res.png"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -929,81 +997,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/" class="post-title-link" itemprop="url">Android外部imgui绘制(二)--补充</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-01 16:30:43 / 修改时间：17:12:22" itemprop="dateCreated datePublished" datetime="2022-04-01T16:30:43+08:00">2022-04-01</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>前几天看到评论区有个小伙伴问我,ue4游戏怎么寻找android_app和获取系统输入.<br>我在这说一下.</p>
-<h1 id="获取android-app"><a href="#获取android-app" class="headerlink" title="获取android_app"></a>获取android_app</h1><h2 id="基址偏移法"><a href="#基址偏移法" class="headerlink" title="基址偏移法"></a>基址偏移法</h2><p>首先,需要找到libUE4.so的android_main函数.<br><img src="/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png" alt="android_main"><br>ida进入android_main函数后按F5,<br><img src="/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/ida_f5.png" alt="ida_f5"><br>可以发现有一个全局变量保存了这个android_app变量.<br>那么它的地址就是</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">libUE4.so(基址)+A36E1D0</span><br></pre></td></tr></table></figure>
-
-<h2 id="注入Hook法-Magisk注入app并嵌入imgui"><a href="#注入Hook法-Magisk注入app并嵌入imgui" class="headerlink" title="注入Hook法 (Magisk注入app并嵌入imgui)"></a>注入Hook法 (Magisk注入app并嵌入imgui)</h2><p>参考了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192">Unity全自动hook的实现</a><br>hook_each等代码可以在这里找到:<br><a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
-<p>直接Hook libUE4.so的android_main函数拿到android_app变量.<br>1.Hook dl_open.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">void *loader_dlopen = DobbySymbolResolver(nullptr, &quot;__dl__Z9do_dlopenPKciPK17android_dlextinfoPKv&quot;);</span><br><span class="line">hook_each((unsigned long)loader_dlopen, (void *)dlopen_, (void **)&amp;dlopen_backup);</span><br></pre></td></tr></table></figure>
-<p>2.在dl_open里拿到libUE4.so句柄并调用dlsym拿到android_main函数地址,然后Hook android_main.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">if (strstr(name, &quot;libUE4.so&quot;))</span><br><span class="line">    &#123;</span><br><span class="line">        ue4_handle = handle;</span><br><span class="line">        LOGI(&quot;Got libUE4.so handle at %lx&quot;, (long)ue4_handle);</span><br><span class="line">        hook_each((unsigned long)dlsym(ue4_handle, &quot;android_main&quot;), (void *)new_android_main, (void **)&amp;ori_android_main);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>3.在Hook后的android_main里保存android_app.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">void new_android_main(struct android_app *app)</span><br><span class="line">&#123;</span><br><span class="line">    // LOGD(&quot;new_android_main&quot;);</span><br><span class="line">    g_App = app; //这个g_App是一个全局变量,保存android_app.</span><br><span class="line">    if (NULL == ori_android_main)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGD(&quot;failed to get original android_main&quot;);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    return ori_android_main(app);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h1 id="获取输入"><a href="#获取输入" class="headerlink" title="获取输入"></a>获取输入</h1><p>先将原android_app的onInputEvent保存,然后替换为自己的onInputEvent.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ori_onInputEvent = decltype(ori_onInputEvent)(g_App-&gt;onInputEvent);</span><br><span class="line">LOGD(&quot;ori_onInputEvent:%llx&quot;, (long long)ori_onInputEvent);</span><br><span class="line">g_App-&gt;onInputEvent = onInputEvent;</span><br></pre></td></tr></table></figure>
-<p>然后自己的onInputEvent就可以打印输入事件了.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">int32_t onInputEvent(struct android_app *app, AInputEvent *inputEvent)</span><br><span class="line">&#123;</span><br><span class="line">    LOGD(&quot;onInputEvent&quot;);</span><br><span class="line">    int32_t event_action = AMotionEvent_getAction(inputEvent);</span><br><span class="line">    LOGD(&quot;event_action:%d&quot;, event_action);</span><br><span class="line">    return ori_onInputEvent(app, inputEvent);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/log.png" alt="log"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1075,7 +1068,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">17</span>
+          <span class="site-state-item-count">18</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
