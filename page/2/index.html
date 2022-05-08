@@ -151,6 +151,84 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/" class="post-title-link" itemprop="url">Android Hook native层获取系统输入</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-04-02 21:51:03 / 修改时间：23:22:29" itemprop="dateCreated datePublished" datetime="2022-04-02T21:51:03+08:00">2022-04-02</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在上一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/">Android外部imgui绘制(二)–补充</a>补充说明了ue4游戏下触摸输入的获取方法.本篇介绍一种更为通用的获取系统输入的方法.</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>在Android系统中获取系统输入的原理是读取”&#x2F;dev&#x2F;input&#x2F;event”下的文件,监听是否有系统输入.然后将不同的输入进行加工,然后分发.<br>在安卓系统中输入事件被分成了</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">KeyEvent(键盘输入)</span><br><span class="line">MotionEvent(触摸输入)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>参考<br><a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/frameworks/native/libs/input/Input.cpp">&#x2F;frameworks&#x2F;native&#x2F;libs&#x2F;input&#x2F;Input.cpp</a></p>
+<p>每一种Event在分发之前都会经过初始化的流程,以触摸事件为例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">1345  void InputConsumer::initializeMotionEvent(MotionEvent* event, const InputMessage* msg) &#123;</span><br><span class="line">1346      uint32_t pointerCount = msg-&gt;body.motion.pointerCount;</span><br><span class="line">1347      PointerProperties pointerProperties[pointerCount];</span><br><span class="line">1348      PointerCoords pointerCoords[pointerCount];</span><br><span class="line">1349      for (uint32_t i = 0; i &lt; pointerCount; i++) &#123;</span><br><span class="line">1350          pointerProperties[i].copyFrom(msg-&gt;body.motion.pointers[i].properties);</span><br><span class="line">1351          pointerCoords[i].copyFrom(msg-&gt;body.motion.pointers[i].coords);</span><br><span class="line">1352      &#125;</span><br><span class="line">1353  </span><br><span class="line">1354      ui::Transform transform;</span><br><span class="line">1355      transform.set(&#123;msg-&gt;body.motion.dsdx, msg-&gt;body.motion.dtdx, msg-&gt;body.motion.tx,</span><br><span class="line">1356                     msg-&gt;body.motion.dtdy, msg-&gt;body.motion.dsdy, msg-&gt;body.motion.ty, 0, 0, 1&#125;);</span><br><span class="line">1357      event-&gt;initialize(msg-&gt;body.motion.eventId, msg-&gt;body.motion.deviceId, msg-&gt;body.motion.source,</span><br><span class="line">1358                        msg-&gt;body.motion.displayId, msg-&gt;body.motion.hmac, msg-&gt;body.motion.action,</span><br><span class="line">1359                        msg-&gt;body.motion.actionButton, msg-&gt;body.motion.flags,</span><br><span class="line">1360                        msg-&gt;body.motion.edgeFlags, msg-&gt;body.motion.metaState,</span><br><span class="line">1361                        msg-&gt;body.motion.buttonState, msg-&gt;body.motion.classification, transform,</span><br><span class="line">1362                        msg-&gt;body.motion.xPrecision, msg-&gt;body.motion.yPrecision,</span><br><span class="line">1363                        msg-&gt;body.motion.xCursorPosition, msg-&gt;body.motion.yCursorPosition,</span><br><span class="line">1364                        msg-&gt;body.motion.displayWidth, msg-&gt;body.motion.displayHeight,</span><br><span class="line">1365                        msg-&gt;body.motion.downTime, msg-&gt;body.motion.eventTime, pointerCount,</span><br><span class="line">1366                        pointerProperties, pointerCoords);</span><br><span class="line">1367  &#125;</span><br></pre></td></tr></table></figure>
+<p>注意到,event-&gt;initialize就是初始化一个MotionEvent.<br><strong>而这个函数(InputConsumer::initializeMotionEvent)就是需要Hook的函数.</strong><br>参考<br><a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/frameworks/native/libs/input/InputTransport.cpp#initializeMotionEvent">&#x2F;frameworks&#x2F;native&#x2F;libs&#x2F;input&#x2F;InputTransport.cpp</a></p>
+<h2 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h2><p>随便观察一个app进程的maps,过滤得到libinput.so的路径.</p>
+<p><img src="/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/libinput.png" alt="libinput"></p>
+<p>这个libinput.so就包含上面InputConsumer::initializeMotionEvent的代码.</p>
+<p>拉到电脑上,ida打开.</p>
+<p><img src="/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/ida.png" alt="ida"><br>得到它的导出函数符号是</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE</span><br></pre></td></tr></table></figure>
+
+<p>用Dobby进行hook</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">static void hook_input()</span><br><span class="line">&#123;</span><br><span class="line">    void *sym_input = DobbySymbolResolver(NULL, &quot;_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE&quot;);</span><br><span class="line">    if (NULL != sym_input)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGD(&quot;_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE:%llx&quot;, (unsigned long long)sym_input);</span><br><span class="line">        DobbyHook(sym_input, (void *)new_input, (void **)&amp;ori_input);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在new_input就可以得到系统输入了.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">static void new_input(void *thiz, void *a2, void *a3)</span><br><span class="line">&#123;</span><br><span class="line">    if (NULL == ori_input)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGD(&quot;failed to get original input&quot;);</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    ori_input(thiz, a2, a3);</span><br><span class="line">    // LOGD(&quot;new_input&quot;);</span><br><span class="line">    LOGD(&quot;action:%d&quot;, AMotionEvent_getAction((AInputEvent *)thiz));</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/log.png" alt="log"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -855,7 +933,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-count">19</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
