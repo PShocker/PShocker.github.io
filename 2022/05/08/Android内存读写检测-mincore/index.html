@@ -21,19 +21,21 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="众所周知,安卓平台读写内存的方式有 1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件2.ptrace3.syscall4.注入读写(Magisk注入) 那么他们谁的读写效率更高呢? 测试方法很简单.读写100000次,记录时间差 12345678clock_gettime(CLOCK_MONOTONIC, &amp;old);for (size_t i &#x3D; 0">
+  <meta name="description" content="Android另一种检测内存读写的方式–mincore 参考了这篇文章安卓手游安全-反外挂基础 原理引用上面文章的一句话 回归主题，上面所述有个关键词叫缺页异常比如我们调用mmap来映射内存，为了防止内存无效分配，该内存空间在未访问时是不会创建物理内存页的。当程序需要使用这块内存区域时，会触发缺页中断，然后系统才会创建物理内存页。 简而言之,就是先用mmap申请一段内存,如果ce,或GG读取这段内">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Android读写内存效率比较">
-<meta property="og:url" content="https://pshocker.github.io/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/index.html">
+<meta property="og:title" content="Android内存读写检测--mincore">
+<meta property="og:url" content="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="众所周知,安卓平台读写内存的方式有 1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件2.ptrace3.syscall4.注入读写(Magisk注入) 那么他们谁的读写效率更高呢? 测试方法很简单.读写100000次,记录时间差 12345678clock_gettime(CLOCK_MONOTONIC, &amp;old);for (size_t i &#x3D; 0">
+<meta property="og:description" content="Android另一种检测内存读写的方式–mincore 参考了这篇文章安卓手游安全-反外挂基础 原理引用上面文章的一句话 回归主题，上面所述有个关键词叫缺页异常比如我们调用mmap来映射内存，为了防止内存无效分配，该内存空间在未访问时是不会创建物理内存页的。当程序需要使用这块内存区域时，会触发缺页中断，然后系统才会创建物理内存页。 简而言之,就是先用mmap申请一段内存,如果ce,或GG读取这段内">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2022-04-17T06:15:22.000Z">
-<meta property="article:modified_time" content="2022-04-17T10:39:01.727Z">
+<meta property="og:image" content="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/1.png">
+<meta property="article:published_time" content="2022-05-08T15:57:07.000Z">
+<meta property="article:modified_time" content="2022-05-08T16:23:45.911Z">
 <meta property="article:author" content="Shocker">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/1.png">
 
-<link rel="canonical" href="https://pshocker.github.io/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/">
+<link rel="canonical" href="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/">
 
 
 <script id="page-configurations">
@@ -46,7 +48,7 @@
   };
 </script>
 
-  <title>Android读写内存效率比较 | Shocker</title>
+  <title>Android内存读写检测--mincore | Shocker</title>
   
 
 
@@ -156,7 +158,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/test.png">
@@ -169,7 +171,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Android读写内存效率比较
+          Android内存读写检测--mincore
         </h1>
 
         <div class="post-meta">
@@ -178,10 +180,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-04-17 14:15:22 / 修改时间：18:39:01" itemprop="dateCreated datePublished" datetime="2022-04-17T14:15:22+08:00">2022-04-17</time>
+              <time title="创建时间：2022-05-08 23:57:07" itemprop="dateCreated datePublished" datetime="2022-05-08T23:57:07+08:00">2022-05-08</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-09 00:23:45" itemprop="dateModified" datetime="2022-05-09T00:23:45+08:00">2022-05-09</time>
+              </span>
 
           
             <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
@@ -201,46 +209,21 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>众所周知,安卓平台读写内存的方式有</p>
-<p>1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件<br>2.ptrace<br>3.syscall<br>4.注入读写(Magisk注入)</p>
-<p>那么他们谁的读写效率更高呢?</p>
-<p>测试方法很简单.读写100000次,记录时间差</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">clock_gettime(CLOCK_MONOTONIC, &amp;old);</span><br><span class="line">for (size_t i = 0; i &lt; 100000; i++)</span><br><span class="line">&#123;</span><br><span class="line">..............</span><br><span class="line">..............</span><br><span class="line">&#125;</span><br><span class="line">clock_gettime(CLOCK_MONOTONIC, &amp;now);</span><br><span class="line">cout &lt;&lt; &quot;time passed is: &quot; &lt;&lt; (now.tv_sec - old.tv_sec) * 1000 + (now.tv_nsec - old.tv_nsec) / 1000000 &lt;&lt; &quot;ms&quot; &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+        <p>Android另一种检测内存读写的方式–mincore</p>
+<p>参考了这篇文章<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38944721/article/details/119471016">安卓手游安全-反外挂基础</a></p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>引用上面文章的一句话</p>
+<p><strong>回归主题，上面所述有个关键词叫缺页异常比如我们调用mmap来映射内存，为了防止内存无效分配，该内存空间在未访问时是不会创建物理内存页的。当程序需要使用这块内存区域时，会触发缺页中断，然后系统才会创建物理内存页。</strong></p>
+<p>简而言之,就是先用mmap申请一段内存,如果ce,或GG读取这段内存后,那么这段内存就会有缺页变成非缺页.<br>而内存的缺页与否可以通过调用mincore判断.</p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p>1.mmap申请内存</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">char * memory= nullptr;</span><br><span class="line">memory= (char*)mmap(nullptr,0x4000, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);</span><br></pre></td></tr></table></figure>
+<p>如果不对memory进行读写,那么memory默认为缺页状态</p>
+<p>2.mincore判断</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">int pageSize = getpagesize();</span><br><span class="line">unsigned char vec = 0;</span><br><span class="line">//memory[0]=1; 这个操作会把memory改为非缺页状态</span><br><span class="line">unsigned long addr= reinterpret_cast&lt;unsigned long&gt;(memory);</span><br><span class="line">unsigned long start = addr &amp; (~(pageSize - 1));</span><br><span class="line">mincore((void *)start, pageSize, &amp;vec);</span><br><span class="line">if (vec == 1)</span><br><span class="line">&#123;</span><br><span class="line">    LOGD(&quot;内存页：%p 存在于物理内存空间&quot;,addr);</span><br><span class="line">&#125;else&#123;</span><br><span class="line">    LOGD(&quot;内存页：%p 不存在于物理内存空间&quot;,addr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
-<p>以下是分别测试读写100000次所需要的时间</p>
-<table border="0" cellpadding="0" cellspacing="0" width="646" style="border-collapse:
- collapse;table-layout:fixed;width:485pt">
- <col width="64" style="width:48pt">
- <col width="146" style="mso-width-source:userset;mso-width-alt:5176;width:109pt">
- <col width="156" style="mso-width-source:userset;mso-width-alt:5546;width:117pt">
- <col width="150" style="mso-width-source:userset;mso-width-alt:5347;width:113pt">
- <col width="130" style="mso-width-source:userset;mso-width-alt:4636;width:98pt">
- <tr height="18" style="height:13.8pt">
-  <td height="18" width="64" style="height:13.8pt;width:48pt"></td>
-  <td width="146" style="width:109pt">mem</td>
-  <td width="156" style="width:117pt">ptrace</td>
-  <td width="150" style="width:113pt">syscall</td>
-  <td width="130" style="width:98pt">注入读写</td>
- </tr>
- <tr height="18" style="height:13.8pt">
-  <td height="18" style="height:13.8pt">读</td>
-  <td>155ms</td>
-  <td>2983ms</td>
-  <td>101ms</td>
-  <td>0.000069ms</td>
- </tr>
- <tr height="18" style="height:13.8pt">
-  <td height="18" style="height:13.8pt">写</td>
-  <td>416ms</td>
-  <td>2940ms</td>
-  <td>88ms</td>
-  <td>0.000243ms</td>
- </tr>
-</table>
-
-<p>可以看出,效率最快的是注入读写,比syscall和读mem快了近1000000倍.</p>
-<p>而ptrace效率低很大程度上因为ptrace的PTRACE_ATTACH和PTRACE_DETACH消耗了大量时间.</p>
-<p>读写效率:<br>注入读写 &gt;&gt; syscall &gt; mem &gt; ptrace</p>
+<h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><p>当ce指定读取该内存时,会发现该内存已经处于非缺页状态.</p>
+<p>但是使用ce全局搜索内存时,并没有检测到这段内存.</p>
+<p><img src="/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/1.png"></p>
+<p>本文所用代码:<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_Mincore">https://github.com/PShocker/Android_Mincore</a></p>
 
     </div>
 
@@ -256,7 +239,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://pshocker.github.io/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/" title="Android读写内存效率比较">https://pshocker.github.io/2022/04/17/Android读写内存效率比较/</a>
+    <a href="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/" title="Android内存读写检测--mincore">https://pshocker.github.io/2022/05/08/Android内存读写检测-mincore/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -273,13 +256,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/04/16/Hook-surfaceflinger%E8%BF%9B%E7%A8%8B%E7%BB%99surface%E5%BC%80%E5%90%8E%E9%97%A8/" rel="prev" title="Hook surfaceflinger进程给surface开后门">
-      <i class="fa fa-chevron-left"></i> Hook surfaceflinger进程给surface开后门
+    <a href="/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-inotify/" rel="prev" title="Android内存读写检测--inotify">
+      <i class="fa fa-chevron-left"></i> Android内存读写检测--inotify
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2022/04/21/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-JNIRoot/" rel="next" title="Android外部imgui绘制--JNIRoot?">
-      Android外部imgui绘制--JNIRoot? <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -339,6 +319,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">2.</span> <span class="nav-text">使用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C"><span class="nav-number">3.</span> <span class="nav-text">效果</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -485,7 +466,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'PShocker.github.io',
       owner       : 'PShocker',
       admin       : ['PShocker'],
-      id          : 'eab6fb9b23050a2e94f9a240a9fa5b8d',
+      id          : 'cf6fde8c2b382c5a7a5e27f4702d470c',
         language: 'zh-CN',
       distractionFreeMode: false
     });
