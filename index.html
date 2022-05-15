@@ -174,10 +174,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-05-14 17:21:28 / 修改时间：18:08:37" itemprop="dateCreated datePublished" datetime="2022-05-14T17:21:28+08:00">2022-05-14</time>
+              <time title="创建时间：2022-05-14 17:21:28" itemprop="dateCreated datePublished" datetime="2022-05-14T17:21:28+08:00">2022-05-14</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-15 21:05:50" itemprop="dateModified" datetime="2022-05-15T21:05:50+08:00">2022-05-15</time>
+              </span>
 
           
 
@@ -194,7 +200,7 @@
 <p>1.注册异常处理函数</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct sigaction act ;</span><br><span class="line">memset(&amp;act ,0 ,sizeof(act));</span><br><span class="line">act.sa_sigaction = &amp;handler ; //异常处理函数</span><br><span class="line">act.sa_flags =SA_SIGINFO |SA_RESETHAND|SA_NODEFER;</span><br><span class="line">sigaction(SIGSEGV,&amp;act ,NULL); //注册异常处理函数,SIGSEGV表示读取或写入无效内存的错误类型</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">void handler (int sig ,siginfo_t *siginfo , void * context)&#123;</span><br><span class="line">    ucontext_t ctx=(*(ucontext_t*)context);</span><br><span class="line">    LOGD(&quot;pc = 0x%llx \n&quot;,ctx.uc_mcontext.pc);//查看是哪个代码访问了这段内存</span><br><span class="line"></span><br><span class="line">    //还原原来内存的属性</span><br><span class="line">    int pageSize = getpagesize();</span><br><span class="line">    unsigned long addr= reinterpret_cast&lt;unsigned long&gt;(&amp;start);</span><br><span class="line">    unsigned long mem = addr &amp; (~(pageSize - 1));</span><br><span class="line">    LOGD(&quot;mprotect:%d&quot;,mprotect(reinterpret_cast&lt;void *&gt;(mem), pageSize, PROT_READ|PROT_WRITE));</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">void handler (int sig ,siginfo_t *siginfo , void * context)&#123;</span><br><span class="line">    //匹配我们要监控的地址</span><br><span class="line">    if (siginfo-&gt;si_addr==&amp;i)&#123;</span><br><span class="line">        ucontext_t ctx=(*(ucontext_t*)context);</span><br><span class="line">        LOGD(&quot;pc = 0x%llx \n&quot;,ctx.uc_mcontext.pc); //查看是哪个代码访问了这段内存</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    //还原原来内存的属性</span><br><span class="line">    int pageSize = getpagesize();</span><br><span class="line">    unsigned long addr= reinterpret_cast&lt;unsigned long&gt;(&amp;start);</span><br><span class="line">    unsigned long mem = addr &amp; (~(pageSize - 1));</span><br><span class="line">    LOGD(&quot;mprotect:%d&quot;,mprotect(reinterpret_cast&lt;void *&gt;(mem), pageSize, PROT_READ|PROT_WRITE));</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p>2.设置要读取的内存的属性,注意这个内存必须按页对齐.这里以读取i为例</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int pageSize = getpagesize();</span><br><span class="line">unsigned long addr= reinterpret_cast&lt;unsigned long&gt;(&amp;i);</span><br><span class="line">start = addr &amp; (~(pageSize - 1)); //按页对齐,start表示对齐后的内存地址</span><br><span class="line">LOGD(&quot;start：%p &quot;,start);</span><br><span class="line">LOGD(&quot;pageSize：%p &quot;,pageSize);</span><br><span class="line">LOGD(&quot;mprotect:%d&quot;,mprotect(reinterpret_cast&lt;void *&gt;(start), pageSize, PROT_NONE)); //0表示成功,-1表示失败</span><br></pre></td></tr></table></figure>
