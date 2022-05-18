@@ -151,6 +151,73 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/" class="post-title-link" itemprop="url">Android反调试--SIGTRAP</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-05-18 11:33:24 / 修改时间：17:12:14" itemprop="dateCreated datePublished" datetime="2022-05-18T11:33:24+08:00">2022-05-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>记录一个通过在原代码插入断点指令的方式来达到反调试效果.<br>参考YK大佬的文章<br><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-272519.htm#msg_header_h1_7">[原创]2022腾讯游戏安全竞赛安卓客户端决赛writeup</a><br><img src="/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/0.png"></p>
+<p><strong>注册异常处理函数,保存原函数指令后替换为 brk #0</strong></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">unsigned char bp[]=&#123;0x00,0x00,0x20,0xD4&#125;; //brk #0</span><br><span class="line">unsigned char backup[4]=&#123;0x00,0x00,0x00,0x00&#125;;//用来保存原指令</span><br><span class="line">void *anti_debug(void *arg)&#123;</span><br><span class="line">    //注册异常函数</span><br><span class="line">    struct sigaction act ;</span><br><span class="line">    memset(&amp;act ,0 ,sizeof(act));</span><br><span class="line">    act.sa_sigaction = &amp;handler ;</span><br><span class="line">    act.sa_flags =SA_NODEFER|SA_RESETHAND;</span><br><span class="line">    sigaction(SIGTRAP,&amp;act ,NULL);</span><br><span class="line"></span><br><span class="line">    //修改内存权限</span><br><span class="line">    int pageSize = getpagesize();</span><br><span class="line">    unsigned long addr= (unsigned long )(test);</span><br><span class="line">    unsigned long mem = addr &amp; (~(pageSize - 1));</span><br><span class="line">    LOGD(&quot;mprotect:%d&quot;,mprotect((void *)(mem), pageSize, PROT_READ|PROT_WRITE|PROT_EXEC));</span><br><span class="line"></span><br><span class="line">    //保存并替换test函数的指令</span><br><span class="line">    memmove((void*)backup,(void*)test, sizeof(backup));</span><br><span class="line">    memmove((void*)test,(void*)bp, sizeof(bp));</span><br><span class="line">    test();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">void handler (int sig ,siginfo_t *siginfo , void * context)&#123;</span><br><span class="line">    LOGD(&quot;handler&quot;);</span><br><span class="line">    memmove((void*)test,(void*)backup, sizeof(backup));//把断点指令恢复</span><br><span class="line">    __builtin___clear_cache((char*)test, (char*)test + 8); //刷新缓存</span><br><span class="line">    LOGD(&quot;handler finish&quot;);</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">void test()&#123;</span><br><span class="line">    LOGD(&quot;test_fun&quot;);</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/1.gif"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -897,88 +964,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/" class="post-title-link" itemprop="url">Magisk注入app并嵌入imgui(三)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-16 11:26:19 / 修改时间：14:57:02" itemprop="dateCreated datePublished" datetime="2022-04-16T11:26:19+08:00">2022-04-16</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在<a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/">Magisk注入app并嵌入imgui(二)</a>里成功创建了surface,但是imgui的画面并没有显示出来,<br><img src="/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/why.jpg"></p>
-<p>看看SurfaceFlinger的信息.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell dumpsys SurfaceFlinger</span><br></pre></td></tr></table></figure>
-<p><img src="/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/layers.png"></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Offscreen Layers:</span><br><span class="line">Layer Surface(name=cac9055 InputMethod)/@0x5406b5b - animation-leash of insets_animation#0 (EffectLayer) callingPid:3013 callingUid:1000 ownerUid:1000</span><br><span class="line">Layer Surface(name=50f3462 com.tencent.mf.uam/com.epicgames.ue4.GameActivity)/@0x5e8236 - animation-leash of starting_reveal#0 (EffectLayer) callingPid:3013 callingUid:1000 ownerUid:1000</span><br><span class="line">Layer Surface(name=Task=1)/@0xca72fe0 - animation-leash of app_transition#0 (EffectLayer) callingPid:3013 callingUid:1000 ownerUid:1000</span><br><span class="line">Layer Surface(name=Task=185)/@0xc4029e3 - animation-leash of app_transition#0 (EffectLayer) callingPid:3013 callingUid:1000 ownerUid:1000</span><br><span class="line">Layer Shocker#0 (BufferStateLayer) callingPid:8669 callingUid:10219 ownerUid:10219</span><br><span class="line">Layer bbq-wrapper#1 (BufferStateLayer) callingPid:8669 callingUid:10219 ownerUid:10219</span><br></pre></td></tr></table></figure>
-<p>唉,我的Layer怎么在Offscreen里?</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Layer Shocker#0 (BufferStateLayer) callingPid:8669 callingUid:10219 ownerUid:10219</span><br></pre></td></tr></table></figure>
-
-<p>打开imgui可执行文件的版本.<br>看看有什么区别.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">+ BufferStateLayer (ImGuiLink#0  screenFlags = 0  miuiVkWidgetTransparent = 0) uid=0</span><br><span class="line">  Region TransparentRegion (this=0 count=0)</span><br><span class="line">  Region VisibleRegion (this=0 count=0)</span><br><span class="line">  Region SurfaceDamageRegion (this=0 count=0)</span><br><span class="line">      layerStack=   0, z=        0, pos=(0,0), size=(  -1,  -1), crop=[  0,   0,  -1,  -1], cornerRadius=0.000000, isProtected=0, isTrustedOverlay=0, isOpaque=0, invalidate=0, dataspace=Default, defaultPixelFormat=Unknown/None, backgroundBlurRadius=0, color=(0.000,0.000,0.000,1.000), flags=0x00000000, tr=[0.00, 0.00][0.00, 0.00]</span><br><span class="line">      parent=none</span><br><span class="line">      zOrderRelativeOf=none</span><br><span class="line">      activeBuffer=[   0x   0:   0,Unknown/None], tr=[0.00, 0.00][0.00, 0.00] queued-frames=0, mRefreshPending=0, metadata=&#123;&#125;, cornerRadiusCrop=[0.00, 0.00, 0.00, 0.00],  shadowRadius=0.000,</span><br><span class="line">+ BufferStateLayer (bbq-wrapper#0  screenFlags = 0  miuiVkWidgetTransparent = 0) uid=0</span><br><span class="line">  Region TransparentRegion (this=0 count=0)</span><br><span class="line">  Region VisibleRegion (this=0 count=1)</span><br><span class="line">    [  0,   0, 1440, 3200]</span><br><span class="line">  Region SurfaceDamageRegion (this=0 count=0)</span><br><span class="line">      layerStack=   0, z=        0, pos=(0,0), size=(1440,3200), crop=[  0,   0,  -1,  -1], cornerRadius=0.000000, isProtected=0, isTrustedOverlay=0, isOpaque=0, invalidate=0, dataspace=Default, defaultPixelFormat=RGBA_8888, backgroundBlurRadius=0, color=(0.000,0.000,0.000,1.000), flags=0x00000100, tr=[0.00, 0.00][0.00, 0.00]</span><br><span class="line">      parent=ImGuiLink#0  screenFlags = 0  miuiVkWidgetTransparent = 0</span><br><span class="line">      zOrderRelativeOf=none</span><br><span class="line">      activeBuffer=[1440x3200:1472,RGBA_8888], tr=[0.00, 0.00][0.00, 0.00] queued-frames=0, mRefreshPending=0, metadata=&#123;dequeueTime:514178138135&#125;, cornerRadiusCrop=[0.00, 0.00, 0.00, 0.00],  shadowRadius=0.000,</span><br></pre></td></tr></table></figure>
-<p>唉,发现可执行文件的uid&#x3D;0而,app创建的surface的uid不为0.</p>
-<p>去源码看看.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">4353      bool addToRoot = callingThreadHasUnscopedSurfaceFlingerAccess();</span><br><span class="line">4354      result = addClientLayer(client, *handle, *gbp, layer, parentHandle, parentLayer, addToRoot,</span><br><span class="line">4355                              outTransformHint);</span><br></pre></td></tr></table></figure>
-<p><a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/s?refs=createLayer&amp;project=frameworks">http://aospxref.com/android-12.0.0_r3/s?refs=createLayer&amp;project=frameworks</a></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">3888  bool SurfaceFlinger::callingThreadHasUnscopedSurfaceFlingerAccess(bool usePermissionCache) &#123;</span><br><span class="line">3889      IPCThreadState* ipc = IPCThreadState::self();</span><br><span class="line">3890      const int pid = ipc-&gt;getCallingPid();</span><br><span class="line">3891      const int uid = ipc-&gt;getCallingUid();</span><br><span class="line">3892      if ((uid != AID_GRAPHICS &amp;&amp; uid != AID_SYSTEM) &amp;&amp;</span><br><span class="line">3893          (usePermissionCache ? !PermissionCache::checkPermission(sAccessSurfaceFlinger, pid, uid)</span><br><span class="line">3894                              : !checkPermission(sAccessSurfaceFlinger, pid, uid))) &#123;</span><br><span class="line">3895          return false;</span><br><span class="line">3896      &#125;</span><br><span class="line">3897      return true;</span><br><span class="line">3898  &#125;</span><br></pre></td></tr></table></figure>
-<p><a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/s?refs=callingThreadHasUnscopedSurfaceFlingerAccess&amp;project=frameworks">http://aospxref.com/android-12.0.0_r3/s?refs=callingThreadHasUnscopedSurfaceFlingerAccess&amp;project=frameworks</a></p>
-<p>这里的pid,uid就是通过下面的函数获取的.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">3890      const int pid = ipc-&gt;getCallingPid();</span><br><span class="line">3891      const int uid = ipc-&gt;getCallingUid();</span><br></pre></td></tr></table></figure>
-
-<p>对于可执行文件来说,pid和uid都是0.</p>
-<p>那么有没有办法让我们创建的surface pid和uid同时为0呢?</p>
-<p>当然有…<br><a href="https://pshocker.github.io/2022/04/16/Hook-surfaceflinger%E8%BF%9B%E7%A8%8B%E7%BB%99surface%E5%BC%80%E5%90%8E%E9%97%A8/">Hook surfaceflinger进程给surface开后门</a></p>
-<p>最后做一个总结:<br>相比于外部imgui,hook eglswapbuffers来说,creteSurface基本上是最优解,它既不会涉及到跨进程读写内存,也不会卡游戏画面.<br>唯一美中不足的地方就是编译复杂,没法跨安卓版本使用.</p>
-<p><img src="/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/dog.gif"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1050,7 +1035,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">22</span>
+          <span class="site-state-item-count">23</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
