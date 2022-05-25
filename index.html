@@ -923,10 +923,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-04-16 14:21:03 / 修改时间：14:51:41" itemprop="dateCreated datePublished" datetime="2022-04-16T14:21:03+08:00">2022-04-16</time>
+              <time title="创建时间：2022-04-16 14:21:03" itemprop="dateCreated datePublished" datetime="2022-04-16T14:21:03+08:00">2022-04-16</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-25 11:35:04" itemprop="dateModified" datetime="2022-05-25T11:35:04+08:00">2022-05-25</time>
+              </span>
 
           
 
@@ -943,7 +949,7 @@
 <p>对于app内部创建的surface来说.它的uid和pid都不为0.</p>
 <p>见<a href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/">Magisk注入app并嵌入imgui(三)</a></p>
 <p>我们只需要找到app创建的surface,并把它的pid和uid改成0,就可以实现可执行文件的效果.</p>
-<p>1.注入surfaceflinger进程<br>参考:<a target="_blank" rel="noopener" href="https://github.com/PShocker/AndroidPtraceInject_surfaceflinger">AndroidPtraceInject_surfaceflinger</a><br>参考:<a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">AndroidPtraceInject</a></p>
+<p>1.注入surfaceflinger进程<br>参考:<a target="_blank" rel="noopener" href="https://github.com/PShocker/AndroidPtraceInject">AndroidPtraceInject</a><br>参考:<a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">AndroidPtraceInject</a></p>
 <p>2.Dobby hook createSurface</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">int hook_createSurface()</span><br><span class="line">&#123;</span><br><span class="line">    LOGD(&quot;hook_createSurface start\n&quot;);</span><br><span class="line">    void *sym = DobbySymbolResolver(NULL, &quot;_ZN7android6Client13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPS6_PNS4_INS_22IGraphicBufferProducerEEEPiPj&quot;);</span><br><span class="line">    if (NULL != sym)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGD(&quot;_ZN7android6Client13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPS6_PNS4_INS_22IGraphicBufferProducerEEEPiPj:%llx&quot;, (unsigned long long)sym);</span><br><span class="line">        DobbyHook(sym, (void *)new_createSurface, (void **)&amp;ori_createSurface);</span><br><span class="line">    &#125;</span><br><span class="line">    LOGD(&quot;hook_createSurface finish\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
