@@ -151,6 +151,85 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/" class="post-title-link" itemprop="url">MIUI13逆向修改内核去掉反调试检测</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-03-21 17:16:05 / 修改时间：18:25:53" itemprop="dateCreated datePublished" datetime="2022-03-21T17:16:05+08:00">2022-03-21</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>很早之前就听说过修改内核源码过反调试检测,于是我直接打开小米的github上去找内核源码编译,然而小米12的源代码开源的并不是很彻底,缺少了一堆东西,还没法编译.-_-</p>
+<p>那既然弄不到内核源码来编译,那我逆向你的内核总该可以吧.</p>
+<p><a target="_blank" rel="noopener" href="https://xiaomirom.com/rom/xiaomi-12-pro-zeus-china-fastboot-recovery-rom/#%E4%B8%8B%E8%BD%BD-%E5%B0%8F%E7%B1%B3-12-pro-%E5%BC%80%E5%8F%91%E7%89%88%E5%86%85%E6%B5%8B%E7%89%88-fastboot-%E7%BA%BF%E5%88%B7%E5%8C%85">小米rom下载地址</a></p>
+<p>下载对应版本的线刷包<br>用7z打开<br>把boot.img提取出来<br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/boot.jpg" alt="boot"></p>
+<h2 id="解包"><a href="#解包" class="headerlink" title="解包"></a>解包</h2><p>现在百度到的解包基本上都已经过时或者不可用了,但是没关系,我们可以借助Magisk的magiskboot来帮忙.</p>
+<p>下载Magisk apk,用7z打开进入lib目录<br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/magiskboot.jpg" alt="magiskboot"></p>
+<p>把libmagiskboot.so拖出来.注意,这个libmagiskboot.so其实是一个可执行文件.<br>把它改成magiskboot即可.</p>
+<p>把这个和boot.img丢到你手机的&#x2F;data&#x2F;local&#x2F;tmp里</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot unpack boot.img</span><br></pre></td></tr></table></figure>
+<p>就可以把kernel文件解包出来了.</p>
+<h2 id="修改"><a href="#修改" class="headerlink" title="修改"></a>修改</h2><p>直接用ida打开kernel文件,shift+f12搜索</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TracerPid</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid.jpg" alt="Tracerpid"><br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid2.jpg" alt="Tracerpid2"><br>双击进去查找交叉引用(快捷键X),点进去就看到了代码.<br>然后把</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MOV X2, X22</span><br></pre></td></tr></table></figure>
+<p>改成</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MOV X2, #0</span><br></pre></td></tr></table></figure>
+<p>就行.<br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/patch.jpg" alt="patch"></p>
+<h2 id="重打包"><a href="#重打包" class="headerlink" title="重打包"></a>重打包</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot repack boot.img</span><br></pre></td></tr></table></figure>
+<h2 id="刷入新的boot-img"><a href="#刷入新的boot-img" class="headerlink" title="刷入新的boot.img"></a>刷入新的boot.img</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adb reboot fastboot</span><br><span class="line">fastboot flash boot boot.img</span><br></pre></td></tr></table></figure>
+
+<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>本文主要参考了<br><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-271179.htm#msg_header_h1_4">绕过Android内核模块加载验证</a>.<br>谢谢这位大佬.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -425,7 +504,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

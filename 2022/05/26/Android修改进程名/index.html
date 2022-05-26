@@ -21,21 +21,25 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="这几天听朋友说GG可以在不加载驱动的情况下设置内存读写断点,类似PC上ce的”查看谁访问了该内存”功能.网上也查了下资料,发现其实不难.简单来说,就是先注册一个异常处理函数,然后把内存属性设置为无法访问(PROT_NONE),然后当程序读取或改写这段内存后会触发异常,在异常处理函数里获取到pc寄存器的值后恢复内存属性即可. 1.注册异常处理函数 12345struct sigaction act">
+  <meta name="description" content="最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势. 其原理就是修改 123&#x2F;prco&#x2F;pid&#x2F;stat&#x2F;prco&#x2F;pid&#x2F;status&#x2F;prco&#x2F;pid&#x2F;cmdline ,来修改进程名. 对于前两种方法,调用prctl函数就可以修改. 1int prctl(int __option, ...);  而对于&#x2F;prco&#x2F;pid&#x2F;cmdli">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Android内存读写断点--mprotect">
-<meta property="og:url" content="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/index.html">
+<meta property="og:title" content="Android修改进程名">
+<meta property="og:url" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="这几天听朋友说GG可以在不加载驱动的情况下设置内存读写断点,类似PC上ce的”查看谁访问了该内存”功能.网上也查了下资料,发现其实不难.简单来说,就是先注册一个异常处理函数,然后把内存属性设置为无法访问(PROT_NONE),然后当程序读取或改写这段内存后会触发异常,在异常处理函数里获取到pc寄存器的值后恢复内存属性即可. 1.注册异常处理函数 12345struct sigaction act">
+<meta property="og:description" content="最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势. 其原理就是修改 123&#x2F;prco&#x2F;pid&#x2F;stat&#x2F;prco&#x2F;pid&#x2F;status&#x2F;prco&#x2F;pid&#x2F;cmdline ,来修改进程名. 对于前两种方法,调用prctl函数就可以修改. 1int prctl(int __option, ...);  而对于&#x2F;prco&#x2F;pid&#x2F;cmdli">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/0.png">
-<meta property="article:published_time" content="2022-05-14T09:21:28.000Z">
-<meta property="article:modified_time" content="2022-05-15T13:08:05.422Z">
+<meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif">
+<meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/0.jpg">
+<meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/1.png">
+<meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/2.png">
+<meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/3.png">
+<meta property="article:published_time" content="2022-05-26T14:29:44.000Z">
+<meta property="article:modified_time" content="2022-05-26T15:27:31.950Z">
 <meta property="article:author" content="Shocker">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/0.png">
+<meta name="twitter:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif">
 
-<link rel="canonical" href="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/">
+<link rel="canonical" href="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/">
 
 
 <script id="page-configurations">
@@ -48,7 +52,7 @@
   };
 </script>
 
-  <title>Android内存读写断点--mprotect | Shocker</title>
+  <title>Android修改进程名 | Shocker</title>
   
 
 
@@ -158,7 +162,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/test.png">
@@ -171,7 +175,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Android内存读写断点--mprotect
+          Android修改进程名
         </h1>
 
         <div class="post-meta">
@@ -180,16 +184,10 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2022-05-14 17:21:28" itemprop="dateCreated datePublished" datetime="2022-05-14T17:21:28+08:00">2022-05-14</time>
+              <time title="创建时间：2022-05-26 22:29:44 / 修改时间：23:27:31" itemprop="dateCreated datePublished" datetime="2022-05-26T22:29:44+08:00">2022-05-26</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-05-15 21:08:05" itemprop="dateModified" datetime="2022-05-15T21:08:05+08:00">2022-05-15</time>
-              </span>
 
           
             <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
@@ -209,16 +207,34 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>这几天听朋友说GG可以在不加载驱动的情况下设置内存读写断点,类似PC上ce的”查看谁访问了该内存”功能.网上也查了下资料,发现其实不难.<br><strong>简单来说,就是先注册一个异常处理函数,然后把内存属性设置为无法访问(PROT_NONE),然后当程序读取或改写这段内存后会触发异常,在异常处理函数里获取到pc寄存器的值后恢复内存属性即可.</strong></p>
-<p>1.注册异常处理函数</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">struct sigaction act ;</span><br><span class="line">memset(&amp;act ,0 ,sizeof(act));</span><br><span class="line">act.sa_sigaction = &amp;handler ; //异常处理函数</span><br><span class="line">act.sa_flags =SA_SIGINFO |SA_RESETHAND|SA_NODEFER;</span><br><span class="line">sigaction(SIGSEGV,&amp;act ,NULL); //注册异常处理函数,SIGSEGV表示读取或写入无效内存的错误类型</span><br></pre></td></tr></table></figure>
+        <p>最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势.<br><img src="/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif"></p>
+<p>其原理就是修改</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/prco/pid/stat</span><br><span class="line">/prco/pid/status</span><br><span class="line">/prco/pid/cmdline</span><br></pre></td></tr></table></figure>
+<p>,来修改进程名.</p>
+<p>对于前两种方法,调用prctl函数就可以修改.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">int prctl(int __option, ...);</span><br></pre></td></tr></table></figure>
 
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">void handler (int sig ,siginfo_t *siginfo , void * context)&#123;</span><br><span class="line">    //匹配我们要监控的地址</span><br><span class="line">    if (siginfo-&gt;si_addr==&amp;i)&#123;</span><br><span class="line">        ucontext_t ctx=(*(ucontext_t*)context);</span><br><span class="line">        LOGD(&quot;pc = 0x%llx \n&quot;,ctx.uc_mcontext.pc); //查看是哪个代码访问了这段内存</span><br><span class="line">    &#125;</span><br><span class="line">    //还原原来内存的属性</span><br><span class="line">    int pageSize = getpagesize();</span><br><span class="line">    unsigned long addr= reinterpret_cast&lt;unsigned long&gt;(&amp;start);</span><br><span class="line">    unsigned long mem = addr &amp; (~(pageSize - 1));</span><br><span class="line">    LOGD(&quot;mprotect:%d&quot;,mprotect(reinterpret_cast&lt;void *&gt;(mem), pageSize, PROT_READ|PROT_WRITE));</span><br><span class="line">    return;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而对于&#x2F;prco&#x2F;pid&#x2F;cmdline,也就是main参数里的argv[0],修改就比较麻烦</p>
+<p>在linux系统上,可以直接在main函数里修改argv[0]来修改进程名,但在android的app里,并没有main函数和argv参数.</p>
+<p>但也并非没有办法.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Linux 还有环境变量参数信息，表示进程执行需要的所有环境变量信息。通过全局变量</span><br><span class="line">char **environ;可以访问环境变量.</span><br></pre></td></tr></table></figure>
 
-<p>2.设置要读取的内存的属性,注意这个内存必须按页对齐.这里以读取i为例</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int pageSize = getpagesize();</span><br><span class="line">unsigned long addr= reinterpret_cast&lt;unsigned long&gt;(&amp;i);</span><br><span class="line">start = addr &amp; (~(pageSize - 1)); //按页对齐,start表示对齐后的内存地址</span><br><span class="line">LOGD(&quot;start：%p &quot;,start);</span><br><span class="line">LOGD(&quot;pageSize：%p &quot;,pageSize);</span><br><span class="line">LOGD(&quot;mprotect:%d&quot;,mprotect(reinterpret_cast&lt;void *&gt;(start), pageSize, PROT_NONE)); //0表示成功,-1表示失败</span><br></pre></td></tr></table></figure>
+<p>还有最关键的一点是:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">命令行参数argv和环境变量信息environ是在一块连续的内存中表示的，并且environ紧跟在argv后面</span><br></pre></td></tr></table></figure>
 
-<p>效果如下:<br><img src="/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/0.png"></p>
+<p><img src="/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/0.jpg"></p>
+<p>也就是说可以根据environ来找到argv[0]</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">extern char **environ;</span><br><span class="line">LOGD(&quot;environ:%llx&quot;,environ[0]);</span><br></pre></td></tr></table></figure>
+
+<p>在logcat里找到日志</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2022-05-26 22:55:34.680 22933-22933/com.shocker.processhide D/Shocker: environ:7fd85b633b</span><br></pre></td></tr></table></figure>
+
+<p>打开ceserver,查看0x7fd85b633b附近的内存<br><img src="/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/1.png"></p>
+<p>0x7fd85b62d8就是进程名了,直接修改它.<br><img src="/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/2.png"></p>
+<p>之后在用ps -ef|grep 命令查看</p>
+<p><img src="/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/3.png"></p>
+<p>哈,发现它的进程名已经被修改了.</p>
+<p>参考了:<br><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/system/250654.html">Linux进程隐藏：初级篇</a><br><a target="_blank" rel="noopener" href="https://www.modb.pro/db/104829">如何改变进程名称</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/hengshan/article/details/7835981">Linux修改进程名称(setproctitle())</a></p>
 
     </div>
 
@@ -234,7 +250,7 @@
   </li>
   <li class="post-copyright-link">
     <strong>本文链接：</strong>
-    <a href="https://pshocker.github.io/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/" title="Android内存读写断点--mprotect">https://pshocker.github.io/2022/05/14/Android内存读写断点-mprotect/</a>
+    <a href="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/" title="Android修改进程名">https://pshocker.github.io/2022/05/26/Android修改进程名/</a>
   </li>
   <li class="post-copyright-license">
     <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
@@ -251,13 +267,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2022/05/12/LIEF%E6%B3%A8%E5%85%A5%E5%92%8C%E4%BF%AE%E6%94%B9Android%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6/" rel="prev" title="LIEF注入和修改Android二进制文件">
-      <i class="fa fa-chevron-left"></i> LIEF注入和修改Android二进制文件
+    <a href="/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/" rel="prev" title="Android反调试--SIGTRAP">
+      <i class="fa fa-chevron-left"></i> Android反调试--SIGTRAP
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/" rel="next" title="Android反调试--SIGTRAP">
-      Android反调试--SIGTRAP <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -463,7 +476,7 @@ NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
       repo        : 'PShocker.github.io',
       owner       : 'PShocker',
       admin       : ['PShocker'],
-      id          : '72f3833f42100b77d43b5a0012884cc9',
+      id          : 'd5408c3d8e21fc551d6bb8083e82ad2f',
         language: 'zh-CN',
       distractionFreeMode: false
     });

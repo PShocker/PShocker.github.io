@@ -151,6 +151,87 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/16/Hook-surfaceflinger%E8%BF%9B%E7%A8%8B%E7%BB%99surface%E5%BC%80%E5%90%8E%E9%97%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/04/16/Hook-surfaceflinger%E8%BF%9B%E7%A8%8B%E7%BB%99surface%E5%BC%80%E5%90%8E%E9%97%A8/" class="post-title-link" itemprop="url">Hook surfaceflinger进程给surface开后门</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-16 14:21:03" itemprop="dateCreated datePublished" datetime="2022-04-16T14:21:03+08:00">2022-04-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-25 11:35:04" itemprop="dateModified" datetime="2022-05-25T11:35:04+08:00">2022-05-25</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>对于可执行文件创建的surface来说.它的uid和pid都为0.</p>
+<p>对于app内部创建的surface来说.它的uid和pid都不为0.</p>
+<p>见<a href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/">Magisk注入app并嵌入imgui(三)</a></p>
+<p>我们只需要找到app创建的surface,并把它的pid和uid改成0,就可以实现可执行文件的效果.</p>
+<p>1.注入surfaceflinger进程<br>参考:<a target="_blank" rel="noopener" href="https://github.com/PShocker/AndroidPtraceInject">AndroidPtraceInject</a><br>参考:<a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">AndroidPtraceInject</a></p>
+<p>2.Dobby hook createSurface</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">int hook_createSurface()</span><br><span class="line">&#123;</span><br><span class="line">    LOGD(&quot;hook_createSurface start\n&quot;);</span><br><span class="line">    void *sym = DobbySymbolResolver(NULL, &quot;_ZN7android6Client13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPS6_PNS4_INS_22IGraphicBufferProducerEEEPiPj&quot;);</span><br><span class="line">    if (NULL != sym)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGD(&quot;_ZN7android6Client13createSurfaceERKNS_7String8EjjijRKNS_2spINS_7IBinderEEENS_13LayerMetadataEPS6_PNS4_INS_22IGraphicBufferProducerEEEPiPj:%llx&quot;, (unsigned long long)sym);</span><br><span class="line">        DobbyHook(sym, (void *)new_createSurface, (void **)&amp;ori_createSurface);</span><br><span class="line">    &#125;</span><br><span class="line">    LOGD(&quot;hook_createSurface finish\n&quot;);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3.从surface的name拿到想要hook的surface的pid和uid</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">static int64_t new_createSurface(void *thiz, void *a2, void *a3, void *a4, void *a5, void *a6, void *a7, void *a8, void *a9, void *a10, void *a11, void *a12)</span><br><span class="line">&#123;</span><br><span class="line">    // LOGD(&quot;new_createSurface&quot;);</span><br><span class="line">    if (NULL == ori_createSurface)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGE(&quot;failed to get original new_createSurface&quot;);</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    LOGD(&quot;str:%llx&quot;, *(unsigned long long *)*(unsigned long long *)a2);</span><br><span class="line"></span><br><span class="line">    if (*(unsigned long long *)*(unsigned long long *)a2 == 0x72656b636f6853) //这里根据surface的名字来判断是否是要Hook的surface.strcmp()会闪退,只能用字符串的16进制来比较.</span><br><span class="line">    &#123;</span><br><span class="line">        LOGD(&quot;getCallingPid:%d&quot;, getCallingPid());</span><br><span class="line">        LOGD(&quot;getCallingUid:%d&quot;, getCallingUid());</span><br><span class="line">        Hook_Pid = getCallingPid(); //这里拿到Pid</span><br><span class="line">        Hook_Uid = getCallingUid(); //Uid</span><br><span class="line">    &#125;</span><br><span class="line">    return ori_createSurface(thiz, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>4.Dobby hook getCallingPid和getCallingUid<br>Hook代码省略</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">static int64_t new_getCallingPid(void *thiz)</span><br><span class="line">&#123;</span><br><span class="line">    // LOGD(&quot;new_getCallingPid&quot;);</span><br><span class="line">    if (NULL == ori_getCallingPid)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGE(&quot;failed to get original new_getCallingPid&quot;);</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    int Pid = ori_getCallingPid(thiz);</span><br><span class="line">    if (Pid == Hook_Pid)</span><br><span class="line">    &#123;</span><br><span class="line">        Hook_Uid = getCallingUid(); //更新Uid</span><br><span class="line">        return 0; //如果是我们创建的surface,就返回0</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        return Pid;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">static int64_t new_getCallingUid(void *thiz)</span><br><span class="line">&#123;</span><br><span class="line">    // LOGD(&quot;new_getCallingUid&quot;);</span><br><span class="line">    if (NULL == ori_getCallingUid)</span><br><span class="line">    &#123;</span><br><span class="line">        LOGE(&quot;failed to get original new_getCallingUid&quot;);</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    int Uid = ori_getCallingUid(thiz);</span><br><span class="line">    if (Uid == Hook_Uid)</span><br><span class="line">    &#123;</span><br><span class="line">        // LOGE(&quot;Hook Uid&quot;);</span><br><span class="line">        return 0; // 如果是我们创建的surface,就返回0</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        return Uid;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>getCallingPid()和getCallingUid()可以在aosp环境里封装一个.a的静态库<br>编译的时候链接就行.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">int getCallingPid()</span><br><span class="line">&#123;</span><br><span class="line">    IPCThreadState *ipc = IPCThreadState::self();</span><br><span class="line">    return ipc-&gt;getCallingPid();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">int getCallingUid()</span><br><span class="line">&#123;</span><br><span class="line">    IPCThreadState *ipc = IPCThreadState::self();</span><br><span class="line">    return ipc-&gt;getCallingUid();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -925,85 +1006,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/" class="post-title-link" itemprop="url">MIUI13逆向修改内核去掉反调试检测</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-03-21 17:16:05 / 修改时间：18:25:53" itemprop="dateCreated datePublished" datetime="2022-03-21T17:16:05+08:00">2022-03-21</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>很早之前就听说过修改内核源码过反调试检测,于是我直接打开小米的github上去找内核源码编译,然而小米12的源代码开源的并不是很彻底,缺少了一堆东西,还没法编译.-_-</p>
-<p>那既然弄不到内核源码来编译,那我逆向你的内核总该可以吧.</p>
-<p><a target="_blank" rel="noopener" href="https://xiaomirom.com/rom/xiaomi-12-pro-zeus-china-fastboot-recovery-rom/#%E4%B8%8B%E8%BD%BD-%E5%B0%8F%E7%B1%B3-12-pro-%E5%BC%80%E5%8F%91%E7%89%88%E5%86%85%E6%B5%8B%E7%89%88-fastboot-%E7%BA%BF%E5%88%B7%E5%8C%85">小米rom下载地址</a></p>
-<p>下载对应版本的线刷包<br>用7z打开<br>把boot.img提取出来<br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/boot.jpg" alt="boot"></p>
-<h2 id="解包"><a href="#解包" class="headerlink" title="解包"></a>解包</h2><p>现在百度到的解包基本上都已经过时或者不可用了,但是没关系,我们可以借助Magisk的magiskboot来帮忙.</p>
-<p>下载Magisk apk,用7z打开进入lib目录<br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/magiskboot.jpg" alt="magiskboot"></p>
-<p>把libmagiskboot.so拖出来.注意,这个libmagiskboot.so其实是一个可执行文件.<br>把它改成magiskboot即可.</p>
-<p>把这个和boot.img丢到你手机的&#x2F;data&#x2F;local&#x2F;tmp里</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot unpack boot.img</span><br></pre></td></tr></table></figure>
-<p>就可以把kernel文件解包出来了.</p>
-<h2 id="修改"><a href="#修改" class="headerlink" title="修改"></a>修改</h2><p>直接用ida打开kernel文件,shift+f12搜索</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TracerPid</span><br></pre></td></tr></table></figure>
-<p><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid.jpg" alt="Tracerpid"><br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid2.jpg" alt="Tracerpid2"><br>双击进去查找交叉引用(快捷键X),点进去就看到了代码.<br>然后把</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MOV X2, X22</span><br></pre></td></tr></table></figure>
-<p>改成</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MOV X2, #0</span><br></pre></td></tr></table></figure>
-<p>就行.<br><img src="/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/patch.jpg" alt="patch"></p>
-<h2 id="重打包"><a href="#重打包" class="headerlink" title="重打包"></a>重打包</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot repack boot.img</span><br></pre></td></tr></table></figure>
-<h2 id="刷入新的boot-img"><a href="#刷入新的boot-img" class="headerlink" title="刷入新的boot.img"></a>刷入新的boot.img</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adb reboot fastboot</span><br><span class="line">fastboot flash boot boot.img</span><br></pre></td></tr></table></figure>
-
-<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>本文主要参考了<br><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-271179.htm#msg_header_h1_4">绕过Android内核模块加载验证</a>.<br>谢谢这位大佬.</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1075,7 +1077,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">23</span>
+          <span class="site-state-item-count">24</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
