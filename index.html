@@ -176,7 +176,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-06-05 21:32:05 / 修改时间：23:10:05" itemprop="dateCreated datePublished" datetime="2022-06-05T21:32:05+08:00">2022-06-05</time>
+              <time title="创建时间：2022-06-05 21:32:05 / 修改时间：23:50:56" itemprop="dateCreated datePublished" datetime="2022-06-05T21:32:05+08:00">2022-06-05</time>
             </span>
 
           
@@ -191,8 +191,8 @@
 
       
           <p>记录对riru(riru-hide)注入so后的检测与对抗.</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>被riru-hide隐藏的so是一段匿名内存,但与大部分匿名内存不同,他的权限位会出现’x’(可执行).</p>
-<p>通过检测maps文件中的匿名内存权限位是否有’x’来判断这段内存是不是riru-hide隐藏的so.</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>被riru-hide隐藏的so是一段匿名内存,但与大部分匿名内存不同,他的权限位会出现”x”(可执行).</p>
+<p>通过检测maps文件中的匿名内存权限位是否有”x”来判断这段内存是不是riru-hide隐藏的so.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">char line[512];</span><br><span class="line">FILE* fp;</span><br><span class="line">fp = fopen(&quot;/proc/self/maps&quot;, &quot;r&quot;);</span><br><span class="line">if (fp) &#123;</span><br><span class="line">    while (fgets(line, 512, fp)) &#123;</span><br><span class="line">        char* part[6];</span><br><span class="line">        part[0] = strtok(line, &quot; &quot;);</span><br><span class="line">        int i=1;</span><br><span class="line">        while(i&lt;6) &#123;</span><br><span class="line">            part[i] = strtok(NULL, &quot; &quot;);</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        if (strcmp(part[5],&quot;\n&quot;)==0)&#123; //匿名内存</span><br><span class="line">            if (strstr(part[1],&quot;x&quot;))&#123;</span><br><span class="line">                LOGD(&quot;发现权限有x的匿名内存,地址:%s&quot;,part[0]);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    LOGD(&quot;没有发现权限有x的匿名内存&quot;);</span><br><span class="line">    fclose(fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/0.png"></p>
 <h2 id="对抗"><a href="#对抗" class="headerlink" title="对抗"></a>对抗</h2><p>至于对抗,只需要把Hook逻辑直接写进Riru里就行,不要让Riru加载so模块.</p>
