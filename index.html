@@ -151,6 +151,88 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/" class="post-title-link" itemprop="url">Android-Riru检测与对抗</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-06-05 21:32:05 / 修改时间：22:38:05" itemprop="dateCreated datePublished" datetime="2022-06-05T21:32:05+08:00">2022-06-05</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>记录对riru(riru-hide)注入so后的检测.</p>
+<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>被riru-hide隐藏的so是一段匿名内存,但与大部分匿名内存不同,他的权限位会出现’x’(可执行).</p>
+<p>通过检测maps文件中的匿名内存权限位是否有’x’来判断这段内存是不是riru-hide隐藏的so.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">char line[512];</span><br><span class="line">FILE* fp;</span><br><span class="line">fp = fopen(&quot;/proc/self/maps&quot;, &quot;r&quot;);</span><br><span class="line">if (fp) &#123;</span><br><span class="line">    while (fgets(line, 512, fp)) &#123;</span><br><span class="line">        char* part[6];</span><br><span class="line">        part[0] = strtok(line, &quot; &quot;);</span><br><span class="line">        int i=1;</span><br><span class="line">        while(i&lt;6) &#123;</span><br><span class="line">            part[i] = strtok(NULL, &quot; &quot;);</span><br><span class="line">            i++;</span><br><span class="line">        &#125;</span><br><span class="line">        if (strcmp(part[5],&quot;\n&quot;)==0)&#123; //匿名内存</span><br><span class="line">            if (strstr(part[1],&quot;x&quot;))&#123;</span><br><span class="line">                LOGD(&quot;发现权限有x的匿名内存,地址:%s&quot;,part[0]);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    LOGD(&quot;没有发现权限有x的匿名内存&quot;);</span><br><span class="line">    fclose(fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/0.png"></p>
+<h2 id="对抗"><a href="#对抗" class="headerlink" title="对抗"></a>对抗</h2><p>至于对抗,只需要把Hook逻辑直接写进Riru里就行,不要让Riru加载so模块.</p>
+<p>1.下载Riru源码</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/RikkaApps/Riru.git</span><br></pre></td></tr></table></figure>
+
+<p>2.修改nativeForkAndSpecialize_pre和nativeForkAndSpecialize_post函数代码</p>
+<p>nativeForkAndSpecialize_post</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">static void</span><br><span class="line">nativeForkAndSpecialize_post(JNIEnv *env, jclass clazz, jint uid, jboolean is_child_zygote,</span><br><span class="line">                             jint res) &#123;</span><br><span class="line"></span><br><span class="line">    // if (res == 0) jni::RestoreHooks(env);</span><br><span class="line"></span><br><span class="line">    // for (const auto &amp;module : modules::Get()) &#123;</span><br><span class="line">    //     if (!module.hasForkAndSpecializePost())</span><br><span class="line">    //         continue;</span><br><span class="line"></span><br><span class="line">    //     if (module.apiVersion &lt; 25) &#123;</span><br><span class="line">    //         if (module.hasShouldSkipUid() &amp;&amp; module.shouldSkipUid(uid))</span><br><span class="line">    //             continue;</span><br><span class="line"></span><br><span class="line">    //         if (!module.hasShouldSkipUid() &amp;&amp; shouldSkipUid(uid))</span><br><span class="line">    //             continue;</span><br><span class="line">    //     &#125;</span><br><span class="line"></span><br><span class="line">    //     if (res == 0) LOGD(&quot;%s: forkAndSpecializePost&quot;, module.id.data());</span><br><span class="line"></span><br><span class="line">    //     module.forkAndSpecializePost(env, clazz, res);</span><br><span class="line">    // &#125;</span><br><span class="line"></span><br><span class="line">    // if (res == 0) Entry::Unload(is_child_zygote);</span><br><span class="line"></span><br><span class="line">    // 这里直接写hook逻辑</span><br><span class="line">    LOGI(&quot;nativeForkAndSpecialize_post&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>nativeSpecializeAppProcess_pre</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">static void nativeSpecializeAppProcess_pre(</span><br><span class="line">        JNIEnv *env, jclass clazz, jint &amp;uid, jint &amp;gid, jintArray &amp;gids, jint &amp;runtimeFlags,</span><br><span class="line">        jobjectArray &amp;rlimits, jint &amp;mountExternal, jstring &amp;seInfo, jstring &amp;niceName,</span><br><span class="line">        jboolean &amp;startChildZygote, jstring &amp;instructionSet, jstring &amp;appDataDir,</span><br><span class="line">        jboolean &amp;isTopApp, jobjectArray &amp;pkgDataInfoList, jobjectArray &amp;whitelistedDataInfoList,</span><br><span class="line">        jboolean &amp;bindMountAppDataDirs, jboolean &amp;bindMountAppStorageDirs) &#123;</span><br><span class="line"></span><br><span class="line">    // for (auto &amp;module : modules::Get()) &#123;</span><br><span class="line">    //     if (!module.hasSpecializeAppProcessPre())</span><br><span class="line">    //         continue;</span><br><span class="line"></span><br><span class="line">    //     module.resetAllowUnload();</span><br><span class="line"></span><br><span class="line">    //     if (module.apiVersion &lt; 25) &#123;</span><br><span class="line">    //         if (module.hasShouldSkipUid() &amp;&amp; module.shouldSkipUid(uid))</span><br><span class="line">    //             continue;</span><br><span class="line"></span><br><span class="line">    //         if (!module.hasShouldSkipUid() &amp;&amp; shouldSkipUid(uid))</span><br><span class="line">    //             continue;</span><br><span class="line">    //     &#125;</span><br><span class="line"></span><br><span class="line">    //     module.specializeAppProcessPre(</span><br><span class="line">    //             env, clazz, &amp;uid, &amp;gid, &amp;gids, &amp;runtimeFlags, &amp;rlimits, &amp;mountExternal, &amp;seInfo,</span><br><span class="line">    //             &amp;niceName, &amp;startChildZygote, &amp;instructionSet, &amp;appDataDir, &amp;isTopApp,</span><br><span class="line">    //             &amp;pkgDataInfoList, &amp;whitelistedDataInfoList, &amp;bindMountAppDataDirs,</span><br><span class="line">    //             &amp;bindMountAppStorageDirs);</span><br><span class="line">    // &#125;</span><br><span class="line"></span><br><span class="line">    // 这里直接写hook逻辑</span><br><span class="line">    LOGI(&quot;nativeSpecializeAppProcess_pre&quot;); </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>3.编译</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gradlew :riru:assembleRelease</span><br></pre></td></tr></table></figure>
+<p>如果报错,看看是不是少了local.properties文件</p>
+<p>4.安装</p>
+<p>略…</p>
+<h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><p>最后效果如图</p>
+<p><img src="/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/1.png"></p>
+<p><img src="/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/2.png"></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -884,104 +966,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/" class="post-title-link" itemprop="url">Android读写内存效率比较</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-17 14:15:22 / 修改时间：18:39:01" itemprop="dateCreated datePublished" datetime="2022-04-17T14:15:22+08:00">2022-04-17</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>众所周知,安卓平台读写内存的方式有</p>
-<p>1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件<br>2.ptrace<br>3.syscall<br>4.注入读写(Magisk注入)</p>
-<p>那么他们谁的读写效率更高呢?</p>
-<p>测试方法很简单.读写100000次,记录时间差</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">clock_gettime(CLOCK_MONOTONIC, &amp;old);</span><br><span class="line">for (size_t i = 0; i &lt; 100000; i++)</span><br><span class="line">&#123;</span><br><span class="line">..............</span><br><span class="line">..............</span><br><span class="line">&#125;</span><br><span class="line">clock_gettime(CLOCK_MONOTONIC, &amp;now);</span><br><span class="line">cout &lt;&lt; &quot;time passed is: &quot; &lt;&lt; (now.tv_sec - old.tv_sec) * 1000 + (now.tv_nsec - old.tv_nsec) / 1000000 &lt;&lt; &quot;ms&quot; &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-
-<p>以下是分别测试读写100000次所需要的时间</p>
-<table border="0" cellpadding="0" cellspacing="0" width="646" style="border-collapse:
- collapse;table-layout:fixed;width:485pt">
- <col width="64" style="width:48pt">
- <col width="146" style="mso-width-source:userset;mso-width-alt:5176;width:109pt">
- <col width="156" style="mso-width-source:userset;mso-width-alt:5546;width:117pt">
- <col width="150" style="mso-width-source:userset;mso-width-alt:5347;width:113pt">
- <col width="130" style="mso-width-source:userset;mso-width-alt:4636;width:98pt">
- <tr height="18" style="height:13.8pt">
-  <td height="18" width="64" style="height:13.8pt;width:48pt"></td>
-  <td width="146" style="width:109pt">mem</td>
-  <td width="156" style="width:117pt">ptrace</td>
-  <td width="150" style="width:113pt">syscall</td>
-  <td width="130" style="width:98pt">注入读写</td>
- </tr>
- <tr height="18" style="height:13.8pt">
-  <td height="18" style="height:13.8pt">读</td>
-  <td>155ms</td>
-  <td>2983ms</td>
-  <td>101ms</td>
-  <td>0.000069ms</td>
- </tr>
- <tr height="18" style="height:13.8pt">
-  <td height="18" style="height:13.8pt">写</td>
-  <td>416ms</td>
-  <td>2940ms</td>
-  <td>88ms</td>
-  <td>0.000243ms</td>
- </tr>
-</table>
-
-<p>可以看出,效率最快的是注入读写,比syscall和读mem快了近1000000倍.</p>
-<p>而ptrace效率低很大程度上因为ptrace的PTRACE_ATTACH和PTRACE_DETACH消耗了大量时间.</p>
-<p>读写效率:<br>注入读写 &gt;&gt; syscall &gt; mem &gt; ptrace</p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1053,7 +1037,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">24</span>
+          <span class="site-state-item-count">25</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
