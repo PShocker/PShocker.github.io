@@ -151,6 +151,103 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/" class="post-title-link" itemprop="url">Android外部imgui绘制(二)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-23 19:11:14" itemprop="dateCreated datePublished" datetime="2022-03-23T19:11:14+08:00">2022-03-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-01 20:20:57" itemprop="dateModified" datetime="2022-04-01T20:20:57+08:00">2022-04-01</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在Android外部imgui绘制(一)里介绍了怎么实现一个外部imgui,其实还有一种方法,就是在aosp环境下编译一个可执行文件出来,有点类似于<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_executable_draw">可执行文件+skia绘制</a><br>但这个其实很麻烦,需要下载android源码(100多g),然后还要自己编译,最后还得修改代码.所以不太建议这么做.虽然效率可能确实会有提升.</p>
+<h2 id="获取触摸"><a href="#获取触摸" class="headerlink" title="获取触摸"></a>获取触摸</h2><p>在绘制imgui后,其实是没有触摸反馈的,原因很简单,在官方示例中,他的入口是</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void android_main(struct android_app* app)</span><br></pre></td></tr></table></figure>
+<p>这个就很像之前ndk-sample的native-activity了.<br><a target="_blank" rel="noopener" href="https://github.com/android/ndk-samples/tree/main/native-activity">https://github.com/android/ndk-samples/tree/main/native-activity</a><br>,其实可以把这个官方的imgui示例改造成native-activity.</p>
+<p>注意看官方示例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">// Poll all events. If the app is not visible, this loop blocks until g_Initialized == true.</span><br><span class="line">        while (ALooper_pollAll(g_Initialized ? 0 : -1, NULL, &amp;out_events, (void**)&amp;out_data) &gt;= 0)</span><br><span class="line">        &#123;</span><br><span class="line">            // Process one event</span><br><span class="line">            if (out_data != NULL)</span><br><span class="line">                out_data-&gt;process(app, out_data);</span><br><span class="line"></span><br><span class="line">            // Exit the app by returning from within the infinite loop</span><br><span class="line">            if (app-&gt;destroyRequested != 0)</span><br><span class="line">            &#123;</span><br><span class="line">                // shutdown() should have been called already while processing the</span><br><span class="line">                // app command APP_CMD_TERM_WINDOW. But we play save here</span><br><span class="line">                if (!g_Initialized)</span><br><span class="line">                    shutdown();</span><br><span class="line"></span><br><span class="line">                return;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<p>你就可以发现它是通过调用ALooper_pollAll来获取系统的输入事件,<br>然而在我们的hello-gl2代码里并不能通过ALooper_pollAll来获取输入事件的,<br>那么怎么获取系统输入呢?</p>
+<h3 id="ue4-找到android-app并hook-onInputEvent函数"><a href="#ue4-找到android-app并hook-onInputEvent函数" class="headerlink" title="(ue4) 找到android_app并hook onInputEvent函数"></a>(ue4) 找到android_app并hook onInputEvent函数</h3><p>这个方法可以在ue4的游戏中找到,可以把ue4的游戏理解成native-activity,然后找到android_app,在它的onInputEvent里挂钩子,将屏幕输入事件转发给imgui.</p>
+<h3 id="双悬浮窗"><a href="#双悬浮窗" class="headerlink" title="双悬浮窗"></a>双悬浮窗</h3><p>比较简单的实现方案,将一个<strong>可点击透明的悬浮窗覆盖在imgui窗口上</strong>,且该悬浮窗随着imgui窗口移动,把对该窗口的输入事件转发到imgui窗口里.</p>
+<h3 id="读取系统触摸"><a href="#读取系统触摸" class="headerlink" title="读取系统触摸"></a>读取系统触摸</h3><p>这个方法就是直接读系统输入的方法了,也就是安卓源码是怎么读取屏幕输入的.<br>原理就是读取&#x2F;dev&#x2F;input&#x2F;event?文件,这里的?表示代表屏幕输入文件的数字.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sprintf(dev_name, &quot;/dev/input/event%d&quot;, i);</span><br><span class="line">fd = open(dev_name, O_RDWR);</span><br></pre></td></tr></table></figure>
+<p>然后将原始的屏幕输入转成安卓的屏幕输入.最后传给imgui即可.<br>这里可以参考<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/a694543965/article/details/79935086">linux读取触摸屏事件数据</a><br>至于怎么加工原始的输入数据,可以参考安卓源码.</p>
+<p>在我的手机上,触摸屏的分辨率是14400x32000.<br>而我的屏幕分辨率是1080x2400.<br>所以需要进一步转换.<br>大致如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x = (x-xmin) * 手机像素宽 / (xmax-xmin);</span><br><span class="line">y = (y-ymin) * 手机像素高 / (ymax-ymin);</span><br></pre></td></tr></table></figure>
+<p>这里xmin,xmax,ymin,ymax可以通过命令拿到.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getevent -p /dev/input/event7</span><br></pre></td></tr></table></figure>
+<p><img src="/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/event.png" alt="event"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0035  : value 0, min 0, max 14399, fuzz 0, flat 0, resolution 0</span><br><span class="line">0036  : value 0, min 0, max 31999, fuzz 0, flat 0, resolution 0</span><br></pre></td></tr></table></figure>
+
+<p>屏幕像素可以通过getRealMetrics获取.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">DisplayMetrics dm = new DisplayMetrics();</span><br><span class="line">getWindowManager().getDefaultDisplay().getRealMetrics(dm);</span><br><span class="line">int widthPixel = dm.widthPixels;</span><br><span class="line">int heightPixel = dm.heightPixels;</span><br></pre></td></tr></table></figure>
+<p>参考<br><a target="_blank" rel="noopener" href="https://www.sohu.com/a/319671175_120058529?qq-pf-to=pcqq.c2c">Android从触碰屏幕开始的事件采集，解析及分发(1)</a>.</p>
+<h2 id="屏幕旋转判断"><a href="#屏幕旋转判断" class="headerlink" title="屏幕旋转判断"></a>屏幕旋转判断</h2><p>当屏幕旋转后系统会回调onSurfaceChanged方法<br>在onSurfaceChanged里读取屏幕旋转方向,然后将屏幕方向赋值给native的全局变量.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">public void onSurfaceChanged(GL10 gl, int width, int height) &#123;</span><br><span class="line">            set_ImGui_Orientation(MainActivity.windowManager.getDefaultDisplay().getOrientation());</span><br><span class="line">            update_ImGui(width,height);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="屏幕旋转后输入事件的处理"><a href="#屏幕旋转后输入事件的处理" class="headerlink" title="屏幕旋转后输入事件的处理"></a>屏幕旋转后输入事件的处理</h3><p>旋转后,屏幕坐标会旋转,但是读取到的输入坐标不会改变,此时需要将横坐标改为纵坐标,横坐标改为屏幕宽度减去横坐标.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.MousePos = ImVec2(y, physic_w - x);</span><br></pre></td></tr></table></figure>
+
+<h2 id="Android12的改进"><a href="#Android12的改进" class="headerlink" title="Android12的改进"></a>Android12的改进</h2><p>按照官方说明<br><a target="_blank" rel="noopener" href="https://developer.android.com/about/versions/12/behavior-changes-all?hl=zh-cn#untrusted-touch-events">不受信任的触摸事件被屏蔽</a>.<br>需要做出如下改动</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># A specific app</span><br><span class="line">adb shell am compat disable BLOCK_UNTRUSTED_TOUCHES com.example.app</span><br><span class="line"></span><br><span class="line"># All apps</span><br><span class="line"># If you&#x27;d still like to see a Logcat message warning when a touch would be</span><br><span class="line"># blocked, use 1 instead of 0.</span><br><span class="line">adb shell settings put global block_untrusted_touches 0</span><br></pre></td></tr></table></figure>
+
+<p>你可以直接敲下面的命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell settings put global block_untrusted_touches 0</span><br></pre></td></tr></table></figure>
+<p>之后你的imgui就可以随意的拖动,点击了.</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%80/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -584,7 +681,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">25</span>
+          <span class="site-state-item-count">26</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
