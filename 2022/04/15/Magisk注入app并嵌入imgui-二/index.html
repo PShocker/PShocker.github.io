@@ -21,19 +21,19 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="之前我写过一篇文章介绍了Magisk注入app并嵌入imgui.其原理就是Hook app进程的eglSwapBuffers函数.在其中完成imgui的初始化的显示. 但我测试UE4游戏的时候发现,要么画面出不来,要么就闪退.大概率是和引擎冲突了…淦. 没办法,那么就创建一个surface.注意,createSurface等函数需要aosp环境.所以需要在aosp环境里编译zygisk模块. 环境">
+  <meta name="description" content="之前我写过一篇文章介绍了 Magisk 注入 app 并嵌入 imgui.  其原理就是 Hook app 进程的 eglSwapBuffers 函数。在其中完成 imgui 的初始化的显示. 但我测试 UE4 游戏的时候发现，要么画面出不来，要么就闪退.  大概率是和引擎冲突了…  淦.  没办法，那么就创建一个 surface.  注意，createSurface 等函数需要 aosp 环境。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Magisk注入app并嵌入imgui(二)">
 <meta property="og:url" content="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="之前我写过一篇文章介绍了Magisk注入app并嵌入imgui.其原理就是Hook app进程的eglSwapBuffers函数.在其中完成imgui的初始化的显示. 但我测试UE4游戏的时候发现,要么画面出不来,要么就闪退.大概率是和引擎冲突了…淦. 没办法,那么就创建一个surface.注意,createSurface等函数需要aosp环境.所以需要在aosp环境里编译zygisk模块. 环境">
+<meta property="og:description" content="之前我写过一篇文章介绍了 Magisk 注入 app 并嵌入 imgui.  其原理就是 Hook app 进程的 eglSwapBuffers 函数。在其中完成 imgui 的初始化的显示. 但我测试 UE4 游戏的时候发现，要么画面出不来，要么就闪退.  大概率是和引擎冲突了…  淦.  没办法，那么就创建一个 surface.  注意，createSurface 等函数需要 aosp 环境。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/kk.jpg">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/vscode.jpg">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/log.jpg">
 <meta property="article:published_time" content="2022-04-15T14:49:47.000Z">
-<meta property="article:modified_time" content="2022-04-16T07:01:22.127Z">
+<meta property="article:modified_time" content="2022-06-10T06:21:12.571Z">
 <meta property="article:author" content="Shocker">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg">
@@ -191,7 +191,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-16 15:01:22" itemprop="dateModified" datetime="2022-04-16T15:01:22+08:00">2022-04-16</time>
+                <time title="修改时间：2022-06-10 14:21:12" itemprop="dateModified" datetime="2022-06-10T14:21:12+08:00">2022-06-10</time>
               </span>
 
           
@@ -212,22 +212,39 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>之前我写过一篇文章介绍了<a href="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/">Magisk注入app并嵌入imgui</a>.<br>其原理就是Hook app进程的eglSwapBuffers函数.在其中完成imgui的初始化的显示.</p>
-<p>但我测试UE4游戏的时候发现,要么画面出不来,要么就闪退.<br>大概率是和引擎冲突了…<br>淦.<br><img src="/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg"></p>
-<p>没办法,那么就创建一个surface.<br>注意,createSurface等函数需要aosp环境.所以需要在<strong>aosp环境里编译zygisk模块.</strong></p>
-<h2 id="环境和工具"><a href="#环境和工具" class="headerlink" title="环境和工具"></a>环境和工具</h2><p>1.Android 12环境(版本可根据自己真机版本选择,硬盘空间最好大于250G,不然拉取失败会出现很多问题)<br>2.wsl或虚拟机(wsl Ubuntu18.04)<br>3.安卓真机(小米12)</p>
-<h2 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h2><h3 id="下载Android12-编译Android12"><a href="#下载Android12-编译Android12" class="headerlink" title="下载Android12,编译Android12."></a>下载Android12,编译Android12.</h3><p>这些网上有很多教学,值得一提的是,相比Android5,新版本编译的时候没有什么错误,基本上一次过.很爽.</p>
+        <p>之前我写过一篇文章介绍了<a href="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/"> Magisk 注入 app 并嵌入 imgui</a>.<br>
+ 其原理就是 Hook app 进程的 eglSwapBuffers 函数。在其中完成 imgui 的初始化的显示.</p>
+<p>但我测试 UE4 游戏的时候发现，要么画面出不来，要么就闪退.<br>
+ 大概率是和引擎冲突了…<br>
+ 淦.<br>
+<img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg" alt></p>
+<p>没办法，那么就创建一个 surface.<br>
+ 注意，createSurface 等函数需要 aosp 环境。所以需要在<strong> aosp 环境里编译 zygisk 模块.</strong></p>
+<h2 id="环境和工具"><a class="markdownIt-Anchor" href="#环境和工具">#</a> 环境和工具</h2>
+<p>1.Android 12 环境 (版本可根据自己真机版本选择，硬盘空间最好大于 250G, 不然拉取失败会出现很多问题)<br>
+ 2.wsl 或虚拟机 (wsl Ubuntu18.04)<br>
+ 3. 安卓真机 (小米 12)</p>
+<h2 id="过程"><a class="markdownIt-Anchor" href="#过程">#</a> 过程</h2>
+<h3 id="下载android12编译android12"><a class="markdownIt-Anchor" href="#下载android12编译android12">#</a> 下载 Android12, 编译 Android12.</h3>
+<p>这些网上有很多教学，值得一提的是，相比 Android5, 新版本编译的时候没有什么错误，基本上一次过。很爽.</p>
 <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/grackergao/article/details/120984766">Android 系统开发系列（1）：Android 12 源代码下载、编译和刷机</a></p>
-<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/68918808">死磕Android_AOSP编译过程</a></p>
-<p><strong>注意:硬盘剩余空间一定要大于250g,硬盘剩余空间一定要大于250g,硬盘剩余空间一定要大于250g</strong><br><strong>否则失败了会很麻烦.</strong></p>
-<p><img src="/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/kk.jpg"></p>
-<h3 id="复制源文件到Android源码里"><a href="#复制源文件到Android源码里" class="headerlink" title="复制源文件到Android源码里"></a>复制源文件到Android源码里</h3><p>参考<a href="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/">Android可执行文件imgui绘制</a>,区别就是编译成动态库(cc_library_shared),还要把zygisk头文件丢进去.<br><img src="/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/vscode.jpg"><br>文件结构如上图.</p>
-<h3 id="过滤到包名-多线程创建imgui"><a href="#过滤到包名-多线程创建imgui" class="headerlink" title="过滤到包名,多线程创建imgui"></a>过滤到包名,多线程创建imgui</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">void postAppSpecialize(const AppSpecializeArgs *args) override</span><br><span class="line">&#123;</span><br><span class="line">    // Use JNI to fetch our process name</span><br><span class="line">    const char *process = env-&gt;GetStringUTFChars(args-&gt;nice_name, nullptr);</span><br><span class="line">    if (init(process) == false)</span><br><span class="line">    &#123;</span><br><span class="line">        //没有找到游戏</span><br><span class="line">        api-&gt;setOption(zygisk::Option::DLCLOSE_MODULE_LIBRARY);</span><br><span class="line">    &#125;</span><br><span class="line">    env-&gt;ReleaseStringUTFChars(args-&gt;nice_name, process);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">bool init(const char *process)</span><br><span class="line">&#123;</span><br><span class="line">    // LOGD(&quot;example: process=[%s]&quot;, process);</span><br><span class="line">    if (strcmp(hook_pkg_name, process) == 0)</span><br><span class="line">    &#123;</span><br><span class="line">        pthread_t ntid;</span><br><span class="line">        if (pthread_create(&amp;ntid, nullptr, startImGui, nullptr))</span><br><span class="line">        &#123;</span><br><span class="line">            LOGD(&quot;can&#x27;t create thread&quot;);</span><br><span class="line">        &#125;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>这里startImGui的代码和<a href="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/">Android可执行文件imgui绘制</a>代码一致.</p>
-<h3 id="观察结果"><a href="#观察结果" class="headerlink" title="观察结果"></a>观察结果</h3><p>然后你会发现完全没有效果,但这并不意味着创建surface失败了,因为如果你打印surface的地址,会发现是有值的,如果你在tick打印日志,会发现日志会一直有输出.<br><img src="/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/log.jpg"><br>为啥会这样呢?</p>
-<p>见<a href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/">Magisk注入app并嵌入imgui(三)</a>.</p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/68918808">死磕 Android_AOSP 编译过程</a></p>
+<p><strong>注意：硬盘剩余空间一定要大于 250g, 硬盘剩余空间一定要大于 250g, 硬盘剩余空间一定要大于 250g</strong><br>
+<strong> 否则失败了会很麻烦.</strong></p>
+<p><img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/kk.jpg" alt></p>
+<h3 id="复制源文件到android源码里"><a class="markdownIt-Anchor" href="#复制源文件到android源码里">#</a> 复制源文件到 Android 源码里</h3>
+<p>参考<a href="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/"> Android 可执行文件 imgui 绘制</a>，区别就是编译成动态库 (cc_library_shared), 还要把 zygisk 头文件丢进去.<br>
+<img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/vscode.jpg" alt><br>
+ 文件结构如上图.</p>
+<h3 id="过滤到包名多线程创建imgui"><a class="markdownIt-Anchor" href="#过滤到包名多线程创建imgui">#</a> 过滤到包名，多线程创建 imgui</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">postAppSpecialize</span><span class="params">(<span class="type">const</span> AppSpecializeArgs *args)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Use JNI to fetch our process name</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *process = env-&gt;<span class="built_in">GetStringUTFChars</span>(args-&gt;nice_name, <span class="literal">nullptr</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">init</span>(process) == <span class="literal">false</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//没有找到游戏</span></span><br><span class="line">        api-&gt;<span class="built_in">setOption</span>(zygisk::Option::DLCLOSE_MODULE_LIBRARY);</span><br><span class="line">    &#125;</span><br><span class="line">    env-&gt;<span class="built_in">ReleaseStringUTFChars</span>(args-&gt;nice_name, process);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">init</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *process)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// LOGD(&quot;example: process=[%s]&quot;, process);</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>(hook_pkg_name, process) == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">pthread_t</span> ntid;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">pthread_create</span>(&amp;ntid, <span class="literal">nullptr</span>, startImGui, <span class="literal">nullptr</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;can&#x27;t create thread&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里 startImGui 的代码和<a href="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/"> Android 可执行文件 imgui 绘制</a>代码一致.</p>
+<h3 id="观察结果"><a class="markdownIt-Anchor" href="#观察结果">#</a> 观察结果</h3>
+<p>然后你会发现完全没有效果，但这并不意味着创建 surface 失败了，因为如果你打印 surface 的地址，会发现是有值的，如果你在 tick 打印日志，会发现日志会一直有输出.<br>
+<img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/log.jpg" alt><br>
+ 为啥会这样呢？</p>
+<p>见<a href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/"> Magisk 注入 app 并嵌入 imgui (三)</a>.</p>
 
     </div>
 
@@ -326,7 +343,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%92%8C%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text">环境和工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BDAndroid12-%E7%BC%96%E8%AF%91Android12"><span class="nav-number">2.1.</span> <span class="nav-text">下载Android12,编译Android12.</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%8D%E5%88%B6%E6%BA%90%E6%96%87%E4%BB%B6%E5%88%B0Android%E6%BA%90%E7%A0%81%E9%87%8C"><span class="nav-number">2.2.</span> <span class="nav-text">复制源文件到Android源码里</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E5%88%B0%E5%8C%85%E5%90%8D-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%88%9B%E5%BB%BAimgui"><span class="nav-number">2.3.</span> <span class="nav-text">过滤到包名,多线程创建imgui</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%82%E5%AF%9F%E7%BB%93%E6%9E%9C"><span class="nav-number">2.4.</span> <span class="nav-text">观察结果</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%AF%E5%A2%83%E5%92%8C%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text"> 环境和工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text"> 过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BDandroid12%E7%BC%96%E8%AF%91android12"><span class="nav-number">2.1.</span> <span class="nav-text"> 下载 Android12, 编译 Android12.</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%8D%E5%88%B6%E6%BA%90%E6%96%87%E4%BB%B6%E5%88%B0android%E6%BA%90%E7%A0%81%E9%87%8C"><span class="nav-number">2.2.</span> <span class="nav-text"> 复制源文件到 Android 源码里</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E5%88%B0%E5%8C%85%E5%90%8D%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%88%9B%E5%BB%BAimgui"><span class="nav-number">2.3.</span> <span class="nav-text"> 过滤到包名，多线程创建 imgui</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%82%E5%AF%9F%E7%BB%93%E6%9E%9C"><span class="nav-number">2.4.</span> <span class="nav-text"> 观察结果</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
