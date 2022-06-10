@@ -570,27 +570,27 @@ Hook 代码省略</p>
 <img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg" alt></p>
 <p>没办法，那么就创建一个 surface.<br>
  注意，createSurface 等函数需要 aosp 环境。所以需要在<strong> aosp 环境里编译 zygisk 模块.</strong></p>
-<h2 id="环境和工具"><a class="markdownIt-Anchor" href="#环境和工具">#</a> 环境和工具</h2>
+<h2 id="环境和工具"><a class="markdownIt-Anchor" href="#环境和工具"></a> 环境和工具</h2>
 <p>1.Android 12 环境 (版本可根据自己真机版本选择，硬盘空间最好大于 250G, 不然拉取失败会出现很多问题)<br>
  2.wsl 或虚拟机 (wsl Ubuntu18.04)<br>
  3. 安卓真机 (小米 12)</p>
-<h2 id="过程"><a class="markdownIt-Anchor" href="#过程">#</a> 过程</h2>
-<h3 id="下载android12编译android12"><a class="markdownIt-Anchor" href="#下载android12编译android12">#</a> 下载 Android12, 编译 Android12.</h3>
+<h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
+<h3 id="下载android12编译android12"><a class="markdownIt-Anchor" href="#下载android12编译android12"></a> 下载 Android12, 编译 Android12.</h3>
 <p>这些网上有很多教学，值得一提的是，相比 Android5, 新版本编译的时候没有什么错误，基本上一次过。很爽.</p>
 <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/grackergao/article/details/120984766">Android 系统开发系列（1）：Android 12 源代码下载、编译和刷机</a></p>
 <p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/68918808">死磕 Android_AOSP 编译过程</a></p>
 <p><strong>注意：硬盘剩余空间一定要大于 250g, 硬盘剩余空间一定要大于 250g, 硬盘剩余空间一定要大于 250g</strong><br>
 <strong> 否则失败了会很麻烦.</strong></p>
 <p><img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/kk.jpg" alt></p>
-<h3 id="复制源文件到android源码里"><a class="markdownIt-Anchor" href="#复制源文件到android源码里">#</a> 复制源文件到 Android 源码里</h3>
+<h3 id="复制源文件到android源码里"><a class="markdownIt-Anchor" href="#复制源文件到android源码里"></a> 复制源文件到 Android 源码里</h3>
 <p>参考<a href="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/"> Android 可执行文件 imgui 绘制</a>，区别就是编译成动态库 (cc_library_shared), 还要把 zygisk 头文件丢进去.<br>
 <img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/vscode.jpg" alt><br>
  文件结构如上图.</p>
-<h3 id="过滤到包名多线程创建imgui"><a class="markdownIt-Anchor" href="#过滤到包名多线程创建imgui">#</a> 过滤到包名，多线程创建 imgui</h3>
+<h3 id="过滤到包名多线程创建imgui"><a class="markdownIt-Anchor" href="#过滤到包名多线程创建imgui"></a> 过滤到包名，多线程创建 imgui</h3>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">postAppSpecialize</span><span class="params">(<span class="type">const</span> AppSpecializeArgs *args)</span> <span class="keyword">override</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Use JNI to fetch our process name</span></span><br><span class="line">    <span class="type">const</span> <span class="type">char</span> *process = env-&gt;<span class="built_in">GetStringUTFChars</span>(args-&gt;nice_name, <span class="literal">nullptr</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">init</span>(process) == <span class="literal">false</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//没有找到游戏</span></span><br><span class="line">        api-&gt;<span class="built_in">setOption</span>(zygisk::Option::DLCLOSE_MODULE_LIBRARY);</span><br><span class="line">    &#125;</span><br><span class="line">    env-&gt;<span class="built_in">ReleaseStringUTFChars</span>(args-&gt;nice_name, process);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">init</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *process)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// LOGD(&quot;example: process=[%s]&quot;, process);</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strcmp</span>(hook_pkg_name, process) == <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">pthread_t</span> ntid;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">pthread_create</span>(&amp;ntid, <span class="literal">nullptr</span>, startImGui, <span class="literal">nullptr</span>))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;can&#x27;t create thread&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这里 startImGui 的代码和<a href="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/"> Android 可执行文件 imgui 绘制</a>代码一致.</p>
-<h3 id="观察结果"><a class="markdownIt-Anchor" href="#观察结果">#</a> 观察结果</h3>
+<h3 id="观察结果"><a class="markdownIt-Anchor" href="#观察结果"></a> 观察结果</h3>
 <p>然后你会发现完全没有效果，但这并不意味着创建 surface 失败了，因为如果你打印 surface 的地址，会发现是有值的，如果你在 tick 打印日志，会发现日志会一直有输出.<br>
 <img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/log.jpg" alt><br>
  为啥会这样呢？</p>
@@ -664,18 +664,18 @@ Hook 代码省略</p>
 <strong>可执行文件 + skia 绘制</strong><br>
 <strong>但这个其实很麻烦，需要下载 android 源码 (100 多 g), 然后还要自己编译，最后还得修改代码。所以不太建议这么做。虽然效率可能确实会有提升.</strong></p>
 <p>好吧，我来填坑了.</p>
-<h2 id="过程"><a class="markdownIt-Anchor" href="#过程">#</a> 过程</h2>
-<h3 id="下载android12编译android12"><a class="markdownIt-Anchor" href="#下载android12编译android12">#</a> 下载 Android12, 编译 Android12.</h3>
+<h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
+<h3 id="下载android12编译android12"><a class="markdownIt-Anchor" href="#下载android12编译android12"></a> 下载 Android12, 编译 Android12.</h3>
 <p>这些网上有很多教学，值得一提的是，相比 Android5, 新版本编译的时候没有什么错误，基本上一次过。很爽.</p>
 <p><a target="_blank" rel="noopener" href="https://blog.csdn.net/grackergao/article/details/120984766">Android 系统开发系列（1）：Android 12 源代码下载、编译和刷机</a></p>
 <p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/68918808">死磕 Android_AOSP 编译过程</a></p>
 <p><strong>注意：硬盘剩余空间一定要大于 250g, 硬盘剩余空间一定要大于 250g, 硬盘剩余空间一定要大于 250g</strong><br>
 <strong> 否则失败了会很麻烦.</strong></p>
-<h3 id="复制源文件到android源码里"><a class="markdownIt-Anchor" href="#复制源文件到android源码里">#</a> 复制源文件到 Android 源码里</h3>
+<h3 id="复制源文件到android源码里"><a class="markdownIt-Anchor" href="#复制源文件到android源码里"></a> 复制源文件到 Android 源码里</h3>
 <p>把 imgui 的相关代码丢到 external 里.</p>
 <p><img src="https://pshocker.github.io/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/vscode.jpg" alt><br>
 文件结构如上图.</p>
-<h3 id="imgui"><a class="markdownIt-Anchor" href="#imgui">#</a> imgui</h3>
+<h3 id="imgui"><a class="markdownIt-Anchor" href="#imgui"></a> imgui</h3>
 <p>1. 新建 SurfaceComposerClient, 并从 SurfaceComposerClient 中创建 surface, 这个 SurfaceComposerClient 其实是 surfaceflinger 进程的代理对象.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">sp&lt;SurfaceComposerClient&gt; client = <span class="keyword">new</span> <span class="built_in">SurfaceComposerClient</span>();</span><br><span class="line">sp&lt;IBinder&gt; mDisplay = SurfaceComposerClient::<span class="built_in">getInternalDisplayToken</span>();</span><br><span class="line"></span><br><span class="line">ui::DisplayMode mode;</span><br><span class="line"><span class="type">status_t</span> result = SurfaceComposerClient::<span class="built_in">getActiveDisplayMode</span>(mDisplay, &amp;mode);</span><br><span class="line"></span><br><span class="line">sp&lt;SurfaceControl&gt; control = client-&gt;<span class="built_in">createSurface</span>(</span><br><span class="line">        <span class="built_in">String8</span>(<span class="string">&quot;Shocker&quot;</span>),</span><br><span class="line">        mode.resolution.<span class="built_in">getWidth</span>(),</span><br><span class="line">        mode.resolution.<span class="built_in">getHeight</span>(),</span><br><span class="line">        PIXEL_FORMAT_RGBA_8888,</span><br><span class="line">        ISurfaceComposerClient::eFXSurfaceBufferState,</span><br><span class="line">        <span class="literal">nullptr</span>);</span><br></pre></td></tr></table></figure>
 <p>这其实非常重要，对于 imgui 来说，它只需要绑定一个窗口 (NativeWindow), 就可以在上面绘制.</p>
@@ -685,7 +685,7 @@ Hook 代码省略</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">init</span><span class="params">(ANativeWindow *g_EglNativeWindowType)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (g_Initialized)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">ANativeWindow_acquire</span>(g_EglNativeWindowType);</span><br><span class="line">............................</span><br><span class="line">(把源码里的g_App-&gt;window全部替换成g_EglNativeWindowType,其余不变)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>4.imgui 循环渲染</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">handleInputEvent</span>(); <span class="comment">//处理触摸事件,获取触摸可以参考我之前的文章.</span></span><br><span class="line">    <span class="built_in">tick</span>(); <span class="comment">//渲染画面</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="最后一点"><a class="markdownIt-Anchor" href="#最后一点">#</a> 最后一点</h2>
+<h2 id="最后一点"><a class="markdownIt-Anchor" href="#最后一点"></a> 最后一点</h2>
 <p>安卓 12 要用 Android.bp 文件来编写编译文件，貌似之前的 Android.mk 可以用，但有 bug.<br>
  附上我编译 imgui 用的 Android.bp 文件.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">cc_binary &#123;</span><br><span class="line">    name: &quot;ImGuiTest&quot;,</span><br><span class="line">    srcs: [&quot;src/**/*.cpp&quot;],</span><br><span class="line"></span><br><span class="line">    local_include_dirs: [</span><br><span class="line">        &quot;src&quot;,</span><br><span class="line">        &quot;src/imgui&quot;,</span><br><span class="line">        &quot;src/backends&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">    cppflags: [</span><br><span class="line">        &quot;-Wno-error&quot;,</span><br><span class="line">        &quot;-Wno-sign-conversion&quot;,</span><br><span class="line">        &quot;-Wno-unused-parameter&quot;,</span><br><span class="line">        &quot;-Wno-sign-conversion&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">    shared_libs: [</span><br><span class="line">        &quot;liblog&quot;,</span><br><span class="line">        &quot;libandroid&quot;,</span><br><span class="line">        &quot;libgui&quot;,</span><br><span class="line">        &quot;libEGL&quot;,</span><br><span class="line">        &quot;libGLESv2&quot;,</span><br><span class="line">        &quot;libbinder&quot;,</span><br><span class="line">        &quot;libui&quot;,</span><br><span class="line">        &quot;libutils&quot;,</span><br><span class="line">        &quot;libinput&quot;,</span><br><span class="line">        &quot;libinputflinger&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -757,12 +757,12 @@ Hook 代码省略</p>
           <p>在之前的一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/"> Android 外部 imgui 绘制 (二)–补充<br>
 </a>提到了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a>。那么就来实战一下.<br>
  游戏:<a target="_blank" rel="noopener" href="https://tp2.uu.cc/"> 神庙逃亡 2</a></p>
-<h2 id="工具"><a class="markdownIt-Anchor" href="#工具">#</a> 工具</h2>
+<h2 id="工具"><a class="markdownIt-Anchor" href="#工具"></a> 工具</h2>
 <p>1.<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper">Il2CppDumper</a><br>
 2.ida7.5<br>
 3.ndk 等编译环境</p>
-<h2 id="过程"><a class="markdownIt-Anchor" href="#过程">#</a> 过程</h2>
-<h3 id="il2cppdumper解压出dumpcs等函数信息"><a class="markdownIt-Anchor" href="#il2cppdumper解压出dumpcs等函数信息">#</a> Il2CppDumper 解压出 dump.cs 等函数信息</h3>
+<h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
+<h3 id="il2cppdumper解压出dumpcs等函数信息"><a class="markdownIt-Anchor" href="#il2cppdumper解压出dumpcs等函数信息"></a> Il2CppDumper 解压出 dump.cs 等函数信息</h3>
 <p>下载<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper/releases/"> Il2CppDumper 解压出 dump</a><br>
  把 apk 里的 global-metadata.dat</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\assets\bin\Data\Managed\Metadata\global-metadata.dat</span><br></pre></td></tr></table></figure>
@@ -772,11 +772,11 @@ Hook 代码省略</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Il2CppDumper.exe libil2cpp.so global-metadata.dat out</span><br></pre></td></tr></table></figure>
 <p>之后解压后的头文件会在 out 文件夹里<br>
 <img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/out.png" alt="out"></p>
-<h3 id="dumpcs里搜索关键点"><a class="markdownIt-Anchor" href="#dumpcs里搜索关键点">#</a> dump.cs 里搜索关键点</h3>
+<h3 id="dumpcs里搜索关键点"><a class="markdownIt-Anchor" href="#dumpcs里搜索关键点"></a> dump.cs 里搜索关键点</h3>
 <p>打开 dump.cs, 搜索 kill. 顺便一提，对于没有加密的 u3 的游戏来说，关键点基本上就是 money,coin,kill,death,start 等。我的目标是实现人物无敌，所以才选择 kill.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// RVA: 0x7A7FE0 Offset: 0x7A7FE0 VA: 0x7A7FE0</span><br><span class="line">public void Kill(DeathTypes deathType, float shakeCamMagnitude = 0, bool killBySelf = False) &#123; &#125;</span><br></pre></td></tr></table></figure>
 <p>得到它的 RVA 是<strong> 0x7A7FE0</strong>.</p>
-<h3 id="ida分析"><a class="markdownIt-Anchor" href="#ida分析">#</a> ida 分析</h3>
+<h3 id="ida分析"><a class="markdownIt-Anchor" href="#ida分析"></a> ida 分析</h3>
 <p><a target="_blank" rel="noopener" href="http://xn--idalibil2cpp-yz0xn45a.so">ida 打开 libil2cpp.so</a>,Alt+F7 执行脚本 ida_py3.py, 选择 out 文件夹里的 script.json, 导入所有函数符号到 ida.<br>
  跳转到地址 0x7A7FE0, 在函数头按 X 查看其交叉引用.<br>
 <img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/ida0.png" alt="ida0"><br>
@@ -789,7 +789,7 @@ Hook 代码省略</p>
 <p>好家伙，这不就是我们要的判断无敌的函数吗？</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TRRunnerPawn__IsInvincible(a1)</span><br></pre></td></tr></table></figure>
 <p>干就完事了.</p>
-<h3 id="自动hook"><a class="markdownIt-Anchor" href="#自动hook">#</a> 自动 Hook</h3>
+<h3 id="自动hook"><a class="markdownIt-Anchor" href="#自动hook"></a> 自动 Hook</h3>
 <p>dump.cs 搜索 IsInvincible</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// RVA: 0x795050 Offset: 0x795050 VA: 0x795050</span><br><span class="line">public bool IsInvincible() &#123; &#125;</span><br></pre></td></tr></table></figure>
 <p>拿到地址后可以去 ida 修改硬编码，直接返回 true. 但是这样不够自动化。万一版本更新偏移变了咋办？</p>
@@ -867,7 +867,7 @@ Hook 代码省略</p>
 
       
           <p>在上一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/"> Android 外部 imgui 绘制 (二)–补充</a>补充说明了 ue4 游戏下触摸输入的获取方法。本篇介绍一种更为通用的获取系统输入的方法.</p>
-<h2 id="原理"><a class="markdownIt-Anchor" href="#原理">#</a> 原理</h2>
+<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
 <p>在 Android 系统中获取系统输入的原理是读取 &quot;/dev/input/event&quot; 下的文件，监听是否有系统输入。然后将不同的输入进行加工，然后分发.<br>
  在安卓系统中输入事件被分成了</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">KeyEvent(键盘输入)</span><br><span class="line">MotionEvent(触摸输入)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
@@ -879,7 +879,7 @@ Hook 代码省略</p>
 <strong> 而这个函数 (InputConsumer::initializeMotionEvent) 就是需要 Hook 的函数.</strong><br>
  参考<br>
 <a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/frameworks/native/libs/input/InputTransport.cpp#initializeMotionEvent"> /frameworks/native/libs/input/InputTransport.cpp</a></p>
-<h2 id="过程"><a class="markdownIt-Anchor" href="#过程">#</a> 过程</h2>
+<h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
 <p>随便观察一个 app 进程的 maps, 过滤得到 libinput.so 的路径.</p>
 <p><img src="https://pshocker.github.io/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/libinput.png" alt="libinput"></p>
 <p>这个 libinput.so 就包含上面 InputConsumer::initializeMotionEvent 的代码.</p>
@@ -960,8 +960,8 @@ Hook 代码省略</p>
       
           <p>前几天看到评论区有个小伙伴问我，ue4 游戏怎么寻找 android_app 和获取系统输入.<br>
  我在这说一下.</p>
-<h1 id="获取android_app"><a class="markdownIt-Anchor" href="#获取android_app">#</a> 获取 android_app</h1>
-<h2 id="基址偏移法"><a class="markdownIt-Anchor" href="#基址偏移法">#</a> 基址偏移法</h2>
+<h1 id="获取android_app"><a class="markdownIt-Anchor" href="#获取android_app"></a> 获取 android_app</h1>
+<h2 id="基址偏移法"><a class="markdownIt-Anchor" href="#基址偏移法"></a> 基址偏移法</h2>
 <p>首先，需要找到 libUE4.so 的 android_main 函数.<br>
 <img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png" alt="android_main"><br>
 ida 进入 android_main 函数后按 F5,<br>
@@ -969,7 +969,7 @@ ida 进入 android_main 函数后按 F5,<br>
  可以发现有一个全局变量保存了这个 android_app 变量.<br>
  那么它的地址就是</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">libUE4.so(基址)+A36E1D0</span><br></pre></td></tr></table></figure>
-<h2 id="注入hook法-magisk注入app并嵌入imgui"><a class="markdownIt-Anchor" href="#注入hook法-magisk注入app并嵌入imgui">#</a> 注入 Hook 法 (Magisk 注入 app 并嵌入 imgui)</h2>
+<h2 id="注入hook法-magisk注入app并嵌入imgui"><a class="markdownIt-Anchor" href="#注入hook法-magisk注入app并嵌入imgui"></a> 注入 Hook 法 (Magisk 注入 app 并嵌入 imgui)</h2>
 <p>参考了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a><br>
  hook_each 等代码可以在这里找到:<br>
 <a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
@@ -980,7 +980,7 @@ ida 进入 android_main 函数后按 F5,<br>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">strstr</span>(name, <span class="string">&quot;libUE4.so&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        ue4_handle = handle;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Got libUE4.so handle at %lx&quot;</span>, (<span class="type">long</span>)ue4_handle);</span><br><span class="line">        <span class="built_in">hook_each</span>((<span class="type">unsigned</span> <span class="type">long</span>)<span class="built_in">dlsym</span>(ue4_handle, <span class="string">&quot;android_main&quot;</span>), (<span class="type">void</span> *)new_android_main, (<span class="type">void</span> **)&amp;ori_android_main);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
 <p>3. 在 Hook 后的 android_main 里保存 android_app.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">new_android_main</span><span class="params">(<span class="keyword">struct</span> android_app *app)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// LOGD(&quot;new_android_main&quot;);</span></span><br><span class="line">    g_App = app; <span class="comment">//这个g_App是一个全局变量,保存android_app.</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == ori_android_main)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;failed to get original android_main&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ori_android_main</span>(app);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h1 id="获取输入"><a class="markdownIt-Anchor" href="#获取输入">#</a> 获取输入</h1>
+<h1 id="获取输入"><a class="markdownIt-Anchor" href="#获取输入"></a> 获取输入</h1>
 <p>先将原 android_app 的 onInputEvent 保存，然后替换为自己的 onInputEvent.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ori_onInputEvent = <span class="keyword">decltype</span>(ori_onInputEvent)(g_App-&gt;onInputEvent);</span><br><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;ori_onInputEvent:%llx&quot;</span>, (<span class="type">long</span> <span class="type">long</span>)ori_onInputEvent);</span><br><span class="line">g_App-&gt;onInputEvent = onInputEvent;</span><br></pre></td></tr></table></figure>
 <p>然后自己的 onInputEvent 就可以打印输入事件了.</p>
@@ -1051,9 +1051,9 @@ ida 进入 android_main 函数后按 F5,<br>
 
       
           <p>在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.</p>
-<h2 id="数据传递"><a class="markdownIt-Anchor" href="#数据传递">#</a> 数据传递</h2>
+<h2 id="数据传递"><a class="markdownIt-Anchor" href="#数据传递"></a> 数据传递</h2>
 <p>由于 jni 是没有 root 权限的，所以只能由 java 端运行一个有 root 权限的进程，然后在 root 进程里将读取到的数据传回 imgui 进程.</p>
-<h3 id="匿名共享内存"><a class="markdownIt-Anchor" href="#匿名共享内存">#</a> 匿名共享内存</h3>
+<h3 id="匿名共享内存"><a class="markdownIt-Anchor" href="#匿名共享内存"></a> 匿名共享内存</h3>
 <p>这是我比较推荐的一个做法，首先用 open &quot;/dev/ashmem&quot; 打开匿名共享内存，设置大小，然后 mmap 函数映射到本地内存.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fd =  <span class="built_in">open</span>(<span class="string">&quot;/dev/ashmem&quot;</span>, O_RDWR);</span><br><span class="line"><span class="built_in">ioctl</span>(fd, ASHMEM_SET_SIZE, <span class="built_in">sizeof</span>(AshmemData));</span><br><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
 <p>之后通过 <s>tcp 或 udp</s> unix socket 将 fd 传给 imgui 进程里.</p>
@@ -1061,10 +1061,10 @@ ida 进入 android_main 函数后按 F5,<br>
 <p>imgui 进程同样使用 mmap 来映射匿名共享内存</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
 <p>映射建立后，双方就可以使用匿名共享内存通信了.</p>
-<h2 id="共享内存结构"><a class="markdownIt-Anchor" href="#共享内存结构">#</a> 共享内存结构</h2>
+<h2 id="共享内存结构"><a class="markdownIt-Anchor" href="#共享内存结构"></a> 共享内存结构</h2>
 <p>一般来说，共享内存包括了需要绘制的人物坐标，载具坐标，物品坐标，还需要额外传递一个 fps 值，这个 fps 值用来读取内存，画面同步.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">AshmemData</span>&#123;</span><br><span class="line">	PlayerData Player[<span class="number">1000</span>]; <span class="comment">//人物数据</span></span><br><span class="line">	<span class="type">int</span> Playersize; <span class="comment">//人物总数</span></span><br><span class="line">	VehicleData Vehicle[<span class="number">1000</span>]; <span class="comment">//载具数据</span></span><br><span class="line">	<span class="type">int</span> Vehiclesize; <span class="comment">//载具数量</span></span><br><span class="line">	ItemData Item[<span class="number">1000</span>]; <span class="comment">// 物品数据</span></span><br><span class="line">	<span class="type">int</span> Itemsize; <span class="comment">// 物品数量</span></span><br><span class="line">	<span class="type">float</span> fps; <span class="comment">//fps,帧率</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h2 id="读取数据"><a class="markdownIt-Anchor" href="#读取数据">#</a> 读取数据</h2>
+<h2 id="读取数据"><a class="markdownIt-Anchor" href="#读取数据"></a> 读取数据</h2>
 <p>如果是用外部读写的方案，那么可以选择如下方法</p>
 <ul>
 <li>读取 /proc/pid/mem 文件.</li>
@@ -1074,7 +1074,7 @@ ida 进入 android_main 函数后按 F5,<br>
 </ul>
 <p>如果用 Magisk 注入的 imgui, 那就比较简单，直接读取即可.</p>
 <p>这里建议有几类数据就开几个线程，比如这里有 3 类数据 (人物，载具，物品), 就开三个线程.</p>
-<h2 id="数据读取速率与画面刷新速率同步"><a class="markdownIt-Anchor" href="#数据读取速率与画面刷新速率同步">#</a> 数据读取速率与画面刷新速率同步</h2>
+<h2 id="数据读取速率与画面刷新速率同步"><a class="markdownIt-Anchor" href="#数据读取速率与画面刷新速率同步"></a> 数据读取速率与画面刷新速率同步</h2>
 <p>屏幕刷新速率通常是固定的，比如 120hz 的屏幕，每更新 1 帧的时间大约为 0.0083 秒，但是你并不能保证读取数据的速率也是 0.0083 秒。如果不加限制，就会造成性能的浪费，<br>
  比如屏幕刷新率比数据读取率快，那么就会导致几帧刷新同一画面.<br>
  如果屏幕刷新率比数据读取率慢，就会导致损失几帧的数据.</p>
@@ -1085,7 +1085,7 @@ ida 进入 android_main 函数后按 F5,<br>
 <p>同样的，在 imgui 渲染线程里同样需要调用这个函数来计算渲染一次所需要的时间</p>
 <p>如果谁的时间少，就需要调用 usleep 函数来等待到 fps 值.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">usleep(time)</span><br></pre></td></tr></table></figure>
-<h2 id="imgui画框子文字"><a class="markdownIt-Anchor" href="#imgui画框子文字">#</a> imgui 画框子，文字</h2>
+<h2 id="imgui画框子文字"><a class="markdownIt-Anchor" href="#imgui画框子文字"></a> imgui 画框子，文字</h2>
 <p>1.imgui 画框子</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawRect</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, <span class="type">int</span> w, <span class="type">int</span> h, RGBA *color, <span class="type">int</span> thickness)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddRect</span>(<span class="built_in">ImVec2</span>(x, y), <span class="built_in">ImVec2</span>(x + w, y + h), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), <span class="number">0</span>, <span class="number">0</span>, thickness);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>2.imgui 画文字</p>
