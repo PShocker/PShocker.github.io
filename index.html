@@ -151,6 +151,77 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/" class="post-title-link" itemprop="url">Android-检测Zygisk</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-06-12 14:35:00 / 修改时间：15:07:47" itemprop="dateCreated datePublished" datetime="2022-06-12T14:35:00+08:00">2022-06-12</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在看 Zygisk 源码和调试的过程中发现了一种可以检测 Zygisk 的方法.</p>
+<p>在我查看 app 的 maps 的时候，如果开启了 zygisk. 那么会在 maps 文件里出现 2 个 app_process, 一个是 magisk, 另一个是真正的 app_process<br>
+ 如图</p>
+<p><img src="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/0.png" alt><br>
+红框的部分其实就是 magisk.</p>
+<p>可以参考:<br>
+<a target="_blank" rel="noopener" href="https://gist.github.com/5ec1cff/bfe06429f5bf1da262c40d0145e9f190#file-zygisk-md">Zygisk 源码分析</a></p>
+<p>所以直接检测这里，看看是不是有 2 个 app_process 就可以判断是否有 Zygisk.</p>
+<p>但有个问题，我在测试的时候发现，并不是所有时间都能检测到 2 个 app_process, 可能是 zygisk 做了处理.<br>
+ 但是在 constructor 里检测是没有问题的.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> app_process64_num=<span class="number">0</span>; <span class="comment">//如果app_process64_num为2,说明有zygisk</span></span><br><span class="line"></span><br><span class="line">__unused __attribute__((constructor)) <span class="function"><span class="type">void</span> <span class="title">constructor_main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    set&lt;<span class="type">int</span>&gt; st;<span class="comment">//以app_process的大小为依据,放在set里</span></span><br><span class="line">    <span class="type">char</span> line[<span class="number">1024</span>];</span><br><span class="line">    <span class="type">char</span> path[PATH_MAX];</span><br><span class="line">    FILE* fp;</span><br><span class="line">    <span class="built_in">sprintf</span>(path,<span class="string">&quot;/proc/%d/maps&quot;</span>,<span class="built_in">getpid</span>());</span><br><span class="line">    fp = <span class="built_in">fopen</span>(path, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (fp) &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="built_in">fgets</span>(line, <span class="number">1024</span>, fp)) &#123;</span><br><span class="line">            <span class="type">char</span>* part[<span class="number">6</span>];</span><br><span class="line">            part[<span class="number">0</span>] = <span class="built_in">strtok</span>(line, <span class="string">&quot; &quot;</span>);</span><br><span class="line">            <span class="type">int</span> i=<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">while</span>(i&lt;<span class="number">6</span>) &#123;</span><br><span class="line">                part[i] = <span class="built_in">strtok</span>(<span class="literal">NULL</span>, <span class="string">&quot; &quot;</span>);</span><br><span class="line">                i++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">strcmp</span>(part[<span class="number">5</span>],<span class="string">&quot;/system/bin/app_process64\n&quot;</span>)==<span class="number">0</span>)&#123; <span class="comment">//app_process</span></span><br><span class="line"><span class="comment">//                 LOGD(&quot;大小:%s,地址:%s&quot;,part[4],part[0]);</span></span><br><span class="line">                <span class="type">int</span> res = <span class="built_in">atoi</span>(part[<span class="number">4</span>]);</span><br><span class="line">                st.<span class="built_in">insert</span>(res);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">fclose</span>(fp);</span><br><span class="line">    &#125;</span><br><span class="line">    app_process64_num=st.<span class="built_in">size</span>(); <span class="comment">//把检测结果给app_process64_num</span></span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>效果如图</p>
+<p><img src="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/1.jpg" alt></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/06/06/Riru-hide%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -931,125 +1002,6 @@ Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" class="post-title-link" itemprop="url">小米12(pro)内核模块编译--环境配置</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2022-04-27 13:47:10 / 修改时间：17:41:23" itemprop="dateCreated datePublished" datetime="2022-04-27T13:47:10+08:00">2022-04-27</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>很早之前，我看到过一份珍贵无比的代码<br>
-<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-259317.htm">开源一个 Linux 内核里进程内存管理模块源码</a></p>
-<p>github 地址:<br>
-<a target="_blank" rel="noopener" href="https://github.com/abcz316/rwProcMem33">https://github.com/abcz316/rwProcMem33</a></p>
-<p>涉及到<strong>内核读写，硬件断点</strong>，很强势！</p>
-<p>直接开干就完事了.</p>
-<p>我的编译环境:wsl (Ubuntu 18.04)</p>
-<h2 id="下载源代码编译工具"><a class="markdownIt-Anchor" href="#下载源代码编译工具"></a> 下载源代码，编译工具</h2>
-<p>参考:<br>
-<a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957">https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957</a></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev unzip openjdk-8-jdk language-pack-zh-hans</span><br></pre></td></tr></table></figure>
-<p>下载小米 12 内核源码:</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --depth=1 https://github.com/MiCode/Xiaomi_Kernel_OpenSource -b zeus-s-oss</span><br></pre></td></tr></table></figure>
-<p>如果没有代理，不建议 git clone, 因为太慢了.</p>
-<p>打开这个网站:<br>
-<a target="_blank" rel="noopener" href="https://d.serctl.com/?dl_start">https://d.serctl.com/?dl_start</a></p>
-<p>下载内核的压缩包<br>
-<a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip"> https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip</a></p>
-<p>下载 clang 编译器:<br>
-<a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master">https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master</a><br>
- (魔法上网)</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">export ARCH=arm64</span><br><span class="line">export SUBARCH=arm64</span><br><span class="line">export CROSS_COMPILE=/home/shocker/aosp12/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-</span><br></pre></td></tr></table></figure>
-<p>CROSS_COMPILE 是我之前编译 aosp 的时候用的，源码里自带的.</p>
-<p>编译命令</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make O=out CC=/home/shocker/clang/bin/clang CLANG_TRIPLE=aarch64-linux-android- generic_vm_defconfig</span><br><span class="line">make -j$(nproc) O=out CC=/home/shocker/clang/bin/clang  CLANG_TRIPLE=aarch64-linux-android- </span><br></pre></td></tr></table></figure>
-<h2 id="踩坑记录"><a class="markdownIt-Anchor" href="#踩坑记录"></a> 踩坑记录</h2>
-<p>重点来了，小米 12 的内核会缺很多文件，必须手动把每个错误都处理掉.</p>
-<h3 id="错误一"><a class="markdownIt-Anchor" href="#错误一"></a> 错误一</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">drivers/misc/Kconfig:540: can&#x27;t open file &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
-<p>打开 drivers/misc/Kconfig 删掉 540 行的</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="错误二"><a class="markdownIt-Anchor" href="#错误二"></a> 错误二</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">../scripts/Makefile.build:44: ../drivers/misc/hwid/Makefile: No such file or directory</span><br><span class="line">make[4]: *** No rule to make target &#x27;../drivers/misc/hwid/Makefile&#x27;.  Stop.</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc/hwid&#x27; failed</span><br><span class="line">make[3]: *** [drivers/misc/hwid] Error 2</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc&#x27; failed</span><br><span class="line">make[2]: *** [drivers/misc] Error 2</span><br><span class="line">/home/shocker/kernel/Xiaomi_Kernel_OpenSource-zeus-s-oss/Makefile:1931: recipe for target &#x27;drivers&#x27; failed</span><br></pre></td></tr></table></figure>
-<p>修改./drivers/misc/Makefile</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ./drivers/misc/Makefile</span><br></pre></td></tr></table></figure>
-<p>注释所有带 hwid 的行</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#ccflags-y += -I$(srctree)/drivers/misc/hwid/</span><br><span class="line">#obj-y                          += hwid/</span><br></pre></td></tr></table></figure>
-<h3 id="错误三"><a class="markdownIt-Anchor" href="#错误三"></a> 错误三</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_interface.h:11:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br><span class="line">         ^~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o] Error 1</span><br><span class="line">make[3]: *** Waiting for unfinished jobs....</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.c:13:10: fatal error: &#x27;mm/slab.h&#x27; file not found</span><br><span class="line">#include &lt;mm/slab.h&gt;</span><br><span class="line">         ^~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o] Error 1</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_util.c:15:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br></pre></td></tr></table></figure>
-<p>把./techpack/camera-kernel/ 删除</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rm -r techpack/camera-kernel/</span><br></pre></td></tr></table></figure>
-<h3 id="错误四"><a class="markdownIt-Anchor" href="#错误四"></a> 错误四</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">../drivers/android/vendor_hooks.c:42:10: fatal error: &#x27;trace/hooks/thermal.h&#x27; file not found</span><br><span class="line">#include &lt;trace/hooks/thermal.h&gt;</span><br></pre></td></tr></table></figure>
-<p>注释掉所有引用到 thermal.h 的地方</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ./drivers/android/vendor_hooks.c</span><br></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">//#include &lt;trace/hooks/thermal.h&gt;</span><br><span class="line">//EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_enable_thermal_genl_check);</span><br><span class="line">//EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_thermal_pm_notify_suspend);</span><br></pre></td></tr></table></figure>
-<p>然后就编译完成了<br>
-<img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/res.png" alt></p>
-<h2 id="编译模块"><a class="markdownIt-Anchor" href="#编译模块"></a> 编译模块</h2>
-<p>一个最简单的内核模块<br>
- hello.c</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;linux/init.h&gt;</span><br><span class="line">#include &lt;linux/module.h&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">static int hello_init(void)</span><br><span class="line">&#123;</span><br><span class="line">    printk(KERN_WARNING&quot;Hello world!\n&quot;);</span><br><span class="line">    return 0;   </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static void hello_exit(void)</span><br><span class="line">&#123;</span><br><span class="line">    printk(KERN_WARNING&quot;hello exit!\n&quot;);    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(hello_init);</span><br><span class="line">module_exit(hello_exit);</span><br><span class="line">MODULE_LICENSE(&quot;GPL&quot;);</span><br></pre></td></tr></table></figure>
-<p>Makefile</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">obj-m := hello.o</span><br><span class="line">KDIR := /home/shocker/Xiaomi_Kernel_OpenSource-zeus-s-oss/out</span><br><span class="line">CFLAGS_MODULE=-fno-pic</span><br><span class="line">ARCH=arm64</span><br><span class="line"></span><br><span class="line">all:</span><br><span class="line">	make -C $(KDIR) M=$(PWD) modules </span><br><span class="line">clean:    </span><br><span class="line">	rm -f *.ko *.o *.mod.o *.mod.c *.symvers *.order</span><br></pre></td></tr></table></figure>
-<p>编译命令</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -j$(nproc) CC=/home/shocker/clang/bin/clang  CLANG_TRIPLE=aarch64-linux-android-</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/ko.png" alt></p>
-<p>github 地址:<br>
-<a target="_blank" rel="noopener" href="https://github.com/PShocker/hellokernel">https://github.com/PShocker/hellokernel</a></p>
-<p>参考了泓清大佬的文章:<br>
-<a target="_blank" rel="noopener" href="https://blog.hongqing.online/android/BuildAndroidKernel/">【Android Kernel】编译总结</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1121,7 +1073,7 @@ Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-count">27</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

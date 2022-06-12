@@ -151,6 +151,125 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/" class="post-title-link" itemprop="url">小米12(pro)内核模块编译--环境配置</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-04-27 13:47:10 / 修改时间：17:41:23" itemprop="dateCreated datePublished" datetime="2022-04-27T13:47:10+08:00">2022-04-27</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>很早之前，我看到过一份珍贵无比的代码<br>
+<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-259317.htm">开源一个 Linux 内核里进程内存管理模块源码</a></p>
+<p>github 地址:<br>
+<a target="_blank" rel="noopener" href="https://github.com/abcz316/rwProcMem33">https://github.com/abcz316/rwProcMem33</a></p>
+<p>涉及到<strong>内核读写，硬件断点</strong>，很强势！</p>
+<p>直接开干就完事了.</p>
+<p>我的编译环境:wsl (Ubuntu 18.04)</p>
+<h2 id="下载源代码编译工具"><a class="markdownIt-Anchor" href="#下载源代码编译工具"></a> 下载源代码，编译工具</h2>
+<p>参考:<br>
+<a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957">https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957</a></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev unzip openjdk-8-jdk language-pack-zh-hans</span><br></pre></td></tr></table></figure>
+<p>下载小米 12 内核源码:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --depth=1 https://github.com/MiCode/Xiaomi_Kernel_OpenSource -b zeus-s-oss</span><br></pre></td></tr></table></figure>
+<p>如果没有代理，不建议 git clone, 因为太慢了.</p>
+<p>打开这个网站:<br>
+<a target="_blank" rel="noopener" href="https://d.serctl.com/?dl_start">https://d.serctl.com/?dl_start</a></p>
+<p>下载内核的压缩包<br>
+<a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip"> https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip</a></p>
+<p>下载 clang 编译器:<br>
+<a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master">https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master</a><br>
+ (魔法上网)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">export ARCH=arm64</span><br><span class="line">export SUBARCH=arm64</span><br><span class="line">export CROSS_COMPILE=/home/shocker/aosp12/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-</span><br></pre></td></tr></table></figure>
+<p>CROSS_COMPILE 是我之前编译 aosp 的时候用的，源码里自带的.</p>
+<p>编译命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make O=out CC=/home/shocker/clang/bin/clang CLANG_TRIPLE=aarch64-linux-android- generic_vm_defconfig</span><br><span class="line">make -j$(nproc) O=out CC=/home/shocker/clang/bin/clang  CLANG_TRIPLE=aarch64-linux-android- </span><br></pre></td></tr></table></figure>
+<h2 id="踩坑记录"><a class="markdownIt-Anchor" href="#踩坑记录"></a> 踩坑记录</h2>
+<p>重点来了，小米 12 的内核会缺很多文件，必须手动把每个错误都处理掉.</p>
+<h3 id="错误一"><a class="markdownIt-Anchor" href="#错误一"></a> 错误一</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">drivers/misc/Kconfig:540: can&#x27;t open file &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
+<p>打开 drivers/misc/Kconfig 删掉 540 行的</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
+<h3 id="错误二"><a class="markdownIt-Anchor" href="#错误二"></a> 错误二</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">../scripts/Makefile.build:44: ../drivers/misc/hwid/Makefile: No such file or directory</span><br><span class="line">make[4]: *** No rule to make target &#x27;../drivers/misc/hwid/Makefile&#x27;.  Stop.</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc/hwid&#x27; failed</span><br><span class="line">make[3]: *** [drivers/misc/hwid] Error 2</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc&#x27; failed</span><br><span class="line">make[2]: *** [drivers/misc] Error 2</span><br><span class="line">/home/shocker/kernel/Xiaomi_Kernel_OpenSource-zeus-s-oss/Makefile:1931: recipe for target &#x27;drivers&#x27; failed</span><br></pre></td></tr></table></figure>
+<p>修改./drivers/misc/Makefile</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ./drivers/misc/Makefile</span><br></pre></td></tr></table></figure>
+<p>注释所有带 hwid 的行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#ccflags-y += -I$(srctree)/drivers/misc/hwid/</span><br><span class="line">#obj-y                          += hwid/</span><br></pre></td></tr></table></figure>
+<h3 id="错误三"><a class="markdownIt-Anchor" href="#错误三"></a> 错误三</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_interface.h:11:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br><span class="line">         ^~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o] Error 1</span><br><span class="line">make[3]: *** Waiting for unfinished jobs....</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.c:13:10: fatal error: &#x27;mm/slab.h&#x27; file not found</span><br><span class="line">#include &lt;mm/slab.h&gt;</span><br><span class="line">         ^~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o] Error 1</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_util.c:15:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br></pre></td></tr></table></figure>
+<p>把./techpack/camera-kernel/ 删除</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rm -r techpack/camera-kernel/</span><br></pre></td></tr></table></figure>
+<h3 id="错误四"><a class="markdownIt-Anchor" href="#错误四"></a> 错误四</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">../drivers/android/vendor_hooks.c:42:10: fatal error: &#x27;trace/hooks/thermal.h&#x27; file not found</span><br><span class="line">#include &lt;trace/hooks/thermal.h&gt;</span><br></pre></td></tr></table></figure>
+<p>注释掉所有引用到 thermal.h 的地方</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ./drivers/android/vendor_hooks.c</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">//#include &lt;trace/hooks/thermal.h&gt;</span><br><span class="line">//EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_enable_thermal_genl_check);</span><br><span class="line">//EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_thermal_pm_notify_suspend);</span><br></pre></td></tr></table></figure>
+<p>然后就编译完成了<br>
+<img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/res.png" alt></p>
+<h2 id="编译模块"><a class="markdownIt-Anchor" href="#编译模块"></a> 编译模块</h2>
+<p>一个最简单的内核模块<br>
+ hello.c</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;linux/init.h&gt;</span><br><span class="line">#include &lt;linux/module.h&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">static int hello_init(void)</span><br><span class="line">&#123;</span><br><span class="line">    printk(KERN_WARNING&quot;Hello world!\n&quot;);</span><br><span class="line">    return 0;   </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static void hello_exit(void)</span><br><span class="line">&#123;</span><br><span class="line">    printk(KERN_WARNING&quot;hello exit!\n&quot;);    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(hello_init);</span><br><span class="line">module_exit(hello_exit);</span><br><span class="line">MODULE_LICENSE(&quot;GPL&quot;);</span><br></pre></td></tr></table></figure>
+<p>Makefile</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">obj-m := hello.o</span><br><span class="line">KDIR := /home/shocker/Xiaomi_Kernel_OpenSource-zeus-s-oss/out</span><br><span class="line">CFLAGS_MODULE=-fno-pic</span><br><span class="line">ARCH=arm64</span><br><span class="line"></span><br><span class="line">all:</span><br><span class="line">	make -C $(KDIR) M=$(PWD) modules </span><br><span class="line">clean:    </span><br><span class="line">	rm -f *.ko *.o *.mod.o *.mod.c *.symvers *.order</span><br></pre></td></tr></table></figure>
+<p>编译命令</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -j$(nproc) CC=/home/shocker/clang/bin/clang  CLANG_TRIPLE=aarch64-linux-android-</span><br></pre></td></tr></table></figure>
+<p><img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/ko.png" alt></p>
+<p>github 地址:<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/hellokernel">https://github.com/PShocker/hellokernel</a></p>
+<p>参考了泓清大佬的文章:<br>
+<a target="_blank" rel="noopener" href="https://blog.hongqing.online/android/BuildAndroidKernel/">【Android Kernel】编译总结</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/21/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-JNIRoot/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1001,111 +1120,6 @@ ida 进入 android_main 函数后按 F5,<br>
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/" class="post-title-link" itemprop="url">Android外部imgui绘制(三)</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-03-24 11:25:43" itemprop="dateCreated datePublished" datetime="2022-03-24T11:25:43+08:00">2022-03-24</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-10 14:21:14" itemprop="dateModified" datetime="2022-06-10T14:21:14+08:00">2022-06-10</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.</p>
-<h2 id="数据传递"><a class="markdownIt-Anchor" href="#数据传递"></a> 数据传递</h2>
-<p>由于 jni 是没有 root 权限的，所以只能由 java 端运行一个有 root 权限的进程，然后在 root 进程里将读取到的数据传回 imgui 进程.</p>
-<h3 id="匿名共享内存"><a class="markdownIt-Anchor" href="#匿名共享内存"></a> 匿名共享内存</h3>
-<p>这是我比较推荐的一个做法，首先用 open &quot;/dev/ashmem&quot; 打开匿名共享内存，设置大小，然后 mmap 函数映射到本地内存.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fd =  <span class="built_in">open</span>(<span class="string">&quot;/dev/ashmem&quot;</span>, O_RDWR);</span><br><span class="line"><span class="built_in">ioctl</span>(fd, ASHMEM_SET_SIZE, <span class="built_in">sizeof</span>(AshmemData));</span><br><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>之后通过 <s>tcp 或 udp</s> unix socket 将 fd 传给 imgui 进程里.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">send_asheme_fd</span>(fd);</span><br></pre></td></tr></table></figure>
-<p>imgui 进程同样使用 mmap 来映射匿名共享内存</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>映射建立后，双方就可以使用匿名共享内存通信了.</p>
-<h2 id="共享内存结构"><a class="markdownIt-Anchor" href="#共享内存结构"></a> 共享内存结构</h2>
-<p>一般来说，共享内存包括了需要绘制的人物坐标，载具坐标，物品坐标，还需要额外传递一个 fps 值，这个 fps 值用来读取内存，画面同步.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">AshmemData</span>&#123;</span><br><span class="line">	PlayerData Player[<span class="number">1000</span>]; <span class="comment">//人物数据</span></span><br><span class="line">	<span class="type">int</span> Playersize; <span class="comment">//人物总数</span></span><br><span class="line">	VehicleData Vehicle[<span class="number">1000</span>]; <span class="comment">//载具数据</span></span><br><span class="line">	<span class="type">int</span> Vehiclesize; <span class="comment">//载具数量</span></span><br><span class="line">	ItemData Item[<span class="number">1000</span>]; <span class="comment">// 物品数据</span></span><br><span class="line">	<span class="type">int</span> Itemsize; <span class="comment">// 物品数量</span></span><br><span class="line">	<span class="type">float</span> fps; <span class="comment">//fps,帧率</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h2 id="读取数据"><a class="markdownIt-Anchor" href="#读取数据"></a> 读取数据</h2>
-<p>如果是用外部读写的方案，那么可以选择如下方法</p>
-<ul>
-<li>读取 /proc/pid/mem 文件.</li>
-<li>读取 /proc/pid/pagemap 文件.</li>
-<li>ptrace 读内存</li>
-<li>syscall(SYS_process_vm_readv, pid, local, 1, remote, 1, 0);</li>
-</ul>
-<p>如果用 Magisk 注入的 imgui, 那就比较简单，直接读取即可.</p>
-<p>这里建议有几类数据就开几个线程，比如这里有 3 类数据 (人物，载具，物品), 就开三个线程.</p>
-<h2 id="数据读取速率与画面刷新速率同步"><a class="markdownIt-Anchor" href="#数据读取速率与画面刷新速率同步"></a> 数据读取速率与画面刷新速率同步</h2>
-<p>屏幕刷新速率通常是固定的，比如 120hz 的屏幕，每更新 1 帧的时间大约为 0.0083 秒，但是你并不能保证读取数据的速率也是 0.0083 秒。如果不加限制，就会造成性能的浪费，<br>
- 比如屏幕刷新率比数据读取率快，那么就会导致几帧刷新同一画面.<br>
- 如果屏幕刷新率比数据读取率慢，就会导致损失几帧的数据.</p>
-<p>通常的做法是计算出每次数据读取的时间.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">clock_gettime(CLOCK_MONOTONIC,&amp;old);</span><br><span class="line">clock_gettime(CLOCK_MONOTONIC,&amp;now);</span><br></pre></td></tr></table></figure>
-<p>clock_gettime (CLOCK_MONOTONIC,&amp;now); 可以读取到当前的时间.<br>
- 在所有线程开始读取前先调用这个函数，读取数据后调用。然后相减即可得到读取一次数据的时间.</p>
-<p>同样的，在 imgui 渲染线程里同样需要调用这个函数来计算渲染一次所需要的时间</p>
-<p>如果谁的时间少，就需要调用 usleep 函数来等待到 fps 值.</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">usleep(time)</span><br></pre></td></tr></table></figure>
-<h2 id="imgui画框子文字"><a class="markdownIt-Anchor" href="#imgui画框子文字"></a> imgui 画框子，文字</h2>
-<p>1.imgui 画框子</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawRect</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, <span class="type">int</span> w, <span class="type">int</span> h, RGBA *color, <span class="type">int</span> thickness)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddRect</span>(<span class="built_in">ImVec2</span>(x, y), <span class="built_in">ImVec2</span>(x + w, y + h), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), <span class="number">0</span>, <span class="number">0</span>, thickness);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>2.imgui 画文字</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawNewText</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, RGBA *color, <span class="type">const</span> <span class="type">char</span> *str)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddText</span>(<span class="built_in">ImVec2</span>(x, y), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), std::<span class="built_in">string</span>(str).<span class="built_in">c_str</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/pic.jpg" alt="pic"></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1177,7 +1191,7 @@ ida 进入 android_main 函数后按 F5,<br>
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">26</span>
+          <span class="site-state-item-count">27</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
