@@ -859,7 +859,7 @@ Hook 代码省略</p>
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-17 16:22:51" itemprop="dateModified" datetime="2022-06-17T16:22:51+08:00">2022-06-17</time>
+                <time title="修改时间：2022-06-17 16:29:11" itemprop="dateModified" datetime="2022-06-17T16:29:11+08:00">2022-06-17</time>
               </span>
 
           
@@ -883,11 +883,10 @@ Hook 代码省略</p>
 <h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
 <h3 id="il2cppdumper解压出dumpcs等函数信息"><a class="markdownIt-Anchor" href="#il2cppdumper解压出dumpcs等函数信息"></a> Il2CppDumper 解压出 dump.cs 等函数信息</h3>
 <p>下载<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper/releases/"> Il2CppDumper</a><br>
- 把 apk 里的 global-metadata.dat</p>
+ 把 apk 里的 global-metadata.dat, 和 libil2cpp.so 提取出来.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\assets\bin\Data\Managed\Metadata\global-metadata.dat</span><br></pre></td></tr></table></figure>
-<p><a target="_blank" rel="noopener" href="http://xn--libil2cpp-pw9o.so">和 libil2cpp.so</a>.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\lib\armeabi-v7a\libil2cpp.so</span><br></pre></td></tr></table></figure>
-<p>提取出来，新建文件夹 out, 命令行执行</p>
+<p>新建文件夹 out, 命令行执行</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Il2CppDumper.exe libil2cpp.so global-metadata.dat out</span><br></pre></td></tr></table></figure>
 <p>之后解压后的头文件会在 out 文件夹里.<br>
 <img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/out.png" alt="out"></p>
