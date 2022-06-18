@@ -196,22 +196,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>前几天看到评论区有个小伙伴问我,ue4游戏怎么寻找android_app和获取系统输入.<br>我在这说一下.</p>
-<h1 id="获取android-app"><a href="#获取android-app" class="headerlink" title="获取android_app"></a>获取android_app</h1><h2 id="基址偏移法"><a href="#基址偏移法" class="headerlink" title="基址偏移法"></a>基址偏移法</h2><p>首先,需要找到libUE4.so的android_main函数.<br><img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png" alt="android_main"><br>ida进入android_main函数后按F5,<br><img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/ida_f5.png" alt="ida_f5"><br>可以发现有一个全局变量保存了这个android_app变量.<br>那么它的地址就是</p>
+          <p>前几天看到评论区有个小伙伴问我，ue4 游戏怎么寻找 android_app 和获取系统输入.<br>
+ 我在这说一下.</p>
+<h1 id="获取android_app"><a class="markdownIt-Anchor" href="#获取android_app"></a> 获取 android_app</h1>
+<h2 id="基址偏移法"><a class="markdownIt-Anchor" href="#基址偏移法"></a> 基址偏移法</h2>
+<p>首先，需要找到 libUE4.so 的 android_main 函数.<br>
+<img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png" alt="android_main"><br>
+ida 进入 android_main 函数后按 F5,<br>
+<img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/ida_f5.png" alt="ida_f5"><br>
+ 可以发现有一个全局变量保存了这个 android_app 变量.<br>
+ 那么它的地址就是</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">libUE4.so(基址)+A36E1D0</span><br></pre></td></tr></table></figure>
-
-<h2 id="注入Hook法-Magisk注入app并嵌入imgui"><a href="#注入Hook法-Magisk注入app并嵌入imgui" class="headerlink" title="注入Hook法 (Magisk注入app并嵌入imgui)"></a>注入Hook法 (Magisk注入app并嵌入imgui)</h2><p>参考了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192">Unity全自动hook的实现</a><br>hook_each等代码可以在这里找到:<br><a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
-<p>直接Hook libUE4.so的android_main函数拿到android_app变量.<br>1.Hook dl_open.</p>
+<h2 id="注入hook法-magisk注入app并嵌入imgui"><a class="markdownIt-Anchor" href="#注入hook法-magisk注入app并嵌入imgui"></a> 注入 Hook 法 (Magisk 注入 app 并嵌入 imgui)</h2>
+<p>参考了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a><br>
+ hook_each 等代码可以在这里找到:<br>
+<a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
+<p>直接 Hook libUE4.so 的 android_main 函数拿到 android_app 变量.<br>
+1.Hook dl_open.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> *loader_dlopen = <span class="built_in">DobbySymbolResolver</span>(<span class="literal">nullptr</span>, <span class="string">&quot;__dl__Z9do_dlopenPKciPK17android_dlextinfoPKv&quot;</span>);</span><br><span class="line"><span class="built_in">hook_each</span>((<span class="type">unsigned</span> <span class="type">long</span>)loader_dlopen, (<span class="type">void</span> *)dlopen_, (<span class="type">void</span> **)&amp;dlopen_backup);</span><br></pre></td></tr></table></figure>
-<p>2.在dl_open里拿到libUE4.so句柄并调用dlsym拿到android_main函数地址,然后Hook android_main.</p>
+<p>2. 在 dl_open 里拿到 libUE4.so 句柄并调用 dlsym 拿到 android_main 函数地址，然后 Hook android_main.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">strstr</span>(name, <span class="string">&quot;libUE4.so&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        ue4_handle = handle;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Got libUE4.so handle at %lx&quot;</span>, (<span class="type">long</span>)ue4_handle);</span><br><span class="line">        <span class="built_in">hook_each</span>((<span class="type">unsigned</span> <span class="type">long</span>)<span class="built_in">dlsym</span>(ue4_handle, <span class="string">&quot;android_main&quot;</span>), (<span class="type">void</span> *)new_android_main, (<span class="type">void</span> **)&amp;ori_android_main);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>3.在Hook后的android_main里保存android_app.</p>
+<p>3. 在 Hook 后的 android_main 里保存 android_app.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">new_android_main</span><span class="params">(<span class="keyword">struct</span> android_app *app)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// LOGD(&quot;new_android_main&quot;);</span></span><br><span class="line">    g_App = app; <span class="comment">//这个g_App是一个全局变量,保存android_app.</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == ori_android_main)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;failed to get original android_main&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ori_android_main</span>(app);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h1 id="获取输入"><a href="#获取输入" class="headerlink" title="获取输入"></a>获取输入</h1><p>先将原android_app的onInputEvent保存,然后替换为自己的onInputEvent.</p>
+<h1 id="获取输入"><a class="markdownIt-Anchor" href="#获取输入"></a> 获取输入</h1>
+<p>先将原 android_app 的 onInputEvent 保存，然后替换为自己的 onInputEvent.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ori_onInputEvent = <span class="keyword">decltype</span>(ori_onInputEvent)(g_App-&gt;onInputEvent);</span><br><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;ori_onInputEvent:%llx&quot;</span>, (<span class="type">long</span> <span class="type">long</span>)ori_onInputEvent);</span><br><span class="line">g_App-&gt;onInputEvent = onInputEvent;</span><br></pre></td></tr></table></figure>
-<p>然后自己的onInputEvent就可以打印输入事件了.</p>
+<p>然后自己的 onInputEvent 就可以打印输入事件了.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int32_t</span> <span class="title">onInputEvent</span><span class="params">(<span class="keyword">struct</span> android_app *app, AInputEvent *inputEvent)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;onInputEvent&quot;</span>);</span><br><span class="line">    <span class="type">int32_t</span> event_action = <span class="built_in">AMotionEvent_getAction</span>(inputEvent);</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;event_action:%d&quot;</span>, event_action);</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ori_onInputEvent</span>(app, inputEvent);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p><img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/log.png" alt="log"></p>
 
       
@@ -277,39 +288,45 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在获取系统触摸后,剩下的就是解决数据传递和画框子的问题了.</p>
-<h2 id="数据传递"><a href="#数据传递" class="headerlink" title="数据传递"></a>数据传递</h2><p>由于jni是没有root权限的,所以只能由java端运行一个有root权限的进程,然后在root进程里将读取到的数据传回imgui进程.</p>
-<h3 id="匿名共享内存"><a href="#匿名共享内存" class="headerlink" title="匿名共享内存"></a>匿名共享内存</h3><p>这是我比较推荐的一个做法,首先用open “&#x2F;dev&#x2F;ashmem”打开匿名共享内存,设置大小,然后mmap函数映射到本地内存.</p>
+          <p>在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.</p>
+<h2 id="数据传递"><a class="markdownIt-Anchor" href="#数据传递"></a> 数据传递</h2>
+<p>由于 jni 是没有 root 权限的，所以只能由 java 端运行一个有 root 权限的进程，然后在 root 进程里将读取到的数据传回 imgui 进程.</p>
+<h3 id="匿名共享内存"><a class="markdownIt-Anchor" href="#匿名共享内存"></a> 匿名共享内存</h3>
+<p>这是我比较推荐的一个做法，首先用 open &quot;/dev/ashmem&quot; 打开匿名共享内存，设置大小，然后 mmap 函数映射到本地内存.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fd =  <span class="built_in">open</span>(<span class="string">&quot;/dev/ashmem&quot;</span>, O_RDWR);</span><br><span class="line"><span class="built_in">ioctl</span>(fd, ASHMEM_SET_SIZE, <span class="built_in">sizeof</span>(AshmemData));</span><br><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>之后通过 <del>tcp或udp</del> unix socket将fd传给imgui进程里.</p>
+<p>之后通过 <s>tcp 或 udp</s> unix socket 将 fd 传给 imgui 进程里.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">send_asheme_fd</span>(fd);</span><br></pre></td></tr></table></figure>
-<p>imgui进程同样使用mmap来映射匿名共享内存</p>
+<p>imgui 进程同样使用 mmap 来映射匿名共享内存</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>映射建立后,双方就可以使用匿名共享内存通信了.</p>
-<h2 id="共享内存结构"><a href="#共享内存结构" class="headerlink" title="共享内存结构"></a>共享内存结构</h2><p>一般来说,共享内存包括了需要绘制的人物坐标,载具坐标,物品坐标,还需要额外传递一个fps值,这个fps值用来读取内存,画面同步.</p>
+<p>映射建立后，双方就可以使用匿名共享内存通信了.</p>
+<h2 id="共享内存结构"><a class="markdownIt-Anchor" href="#共享内存结构"></a> 共享内存结构</h2>
+<p>一般来说，共享内存包括了需要绘制的人物坐标，载具坐标，物品坐标，还需要额外传递一个 fps 值，这个 fps 值用来读取内存，画面同步.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">AshmemData</span>&#123;</span><br><span class="line">	PlayerData Player[<span class="number">1000</span>]; <span class="comment">//人物数据</span></span><br><span class="line">	<span class="type">int</span> Playersize; <span class="comment">//人物总数</span></span><br><span class="line">	VehicleData Vehicle[<span class="number">1000</span>]; <span class="comment">//载具数据</span></span><br><span class="line">	<span class="type">int</span> Vehiclesize; <span class="comment">//载具数量</span></span><br><span class="line">	ItemData Item[<span class="number">1000</span>]; <span class="comment">// 物品数据</span></span><br><span class="line">	<span class="type">int</span> Itemsize; <span class="comment">// 物品数量</span></span><br><span class="line">	<span class="type">float</span> fps; <span class="comment">//fps,帧率</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h2 id="读取数据"><a href="#读取数据" class="headerlink" title="读取数据"></a>读取数据</h2><p>如果是用外部读写的方案,那么可以选择如下方法</p>
+<h2 id="读取数据"><a class="markdownIt-Anchor" href="#读取数据"></a> 读取数据</h2>
+<p>如果是用外部读写的方案，那么可以选择如下方法</p>
 <ul>
-<li>读取&#x2F;proc&#x2F;pid&#x2F;mem文件.</li>
-<li>读取&#x2F;proc&#x2F;pid&#x2F;pagemap文件.</li>
-<li>ptrace读内存</li>
+<li>读取 /proc/pid/mem 文件.</li>
+<li>读取 /proc/pid/pagemap 文件.</li>
+<li>ptrace 读内存</li>
 <li>syscall(SYS_process_vm_readv, pid, local, 1, remote, 1, 0);</li>
 </ul>
-<p>如果用Magisk注入的imgui,那就比较简单,直接读取即可.</p>
-<p>这里建议有几类数据就开几个线程,比如这里有3类数据(人物,载具,物品),就开三个线程.</p>
-<h2 id="数据读取速率与画面刷新速率同步"><a href="#数据读取速率与画面刷新速率同步" class="headerlink" title="数据读取速率与画面刷新速率同步"></a>数据读取速率与画面刷新速率同步</h2><p>屏幕刷新速率通常是固定的,比如120hz的屏幕,每更新1帧的时间大约为0.0083秒,但是你并不能保证读取数据的速率也是0.0083秒.如果不加限制,就会造成性能的浪费,<br>比如屏幕刷新率比数据读取率快,那么就会导致几帧刷新同一画面.<br>如果屏幕刷新率比数据读取率慢,就会导致损失几帧的数据.</p>
+<p>如果用 Magisk 注入的 imgui, 那就比较简单，直接读取即可.</p>
+<p>这里建议有几类数据就开几个线程，比如这里有 3 类数据 (人物，载具，物品), 就开三个线程.</p>
+<h2 id="数据读取速率与画面刷新速率同步"><a class="markdownIt-Anchor" href="#数据读取速率与画面刷新速率同步"></a> 数据读取速率与画面刷新速率同步</h2>
+<p>屏幕刷新速率通常是固定的，比如 120hz 的屏幕，每更新 1 帧的时间大约为 0.0083 秒，但是你并不能保证读取数据的速率也是 0.0083 秒。如果不加限制，就会造成性能的浪费，<br>
+ 比如屏幕刷新率比数据读取率快，那么就会导致几帧刷新同一画面.<br>
+ 如果屏幕刷新率比数据读取率慢，就会导致损失几帧的数据.</p>
 <p>通常的做法是计算出每次数据读取的时间.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">clock_gettime(CLOCK_MONOTONIC,&amp;old);</span><br><span class="line">clock_gettime(CLOCK_MONOTONIC,&amp;now);</span><br></pre></td></tr></table></figure>
-<p>clock_gettime(CLOCK_MONOTONIC,&amp;now);可以读取到当前的时间.<br>在所有线程开始读取前先调用这个函数,读取数据后调用.然后相减即可得到读取一次数据的时间.</p>
-<p>同样的,在imgui渲染线程里同样需要调用这个函数来计算渲染一次所需要的时间</p>
-<p>如果谁的时间少,就需要调用usleep函数来等待到fps值.</p>
+<p>clock_gettime (CLOCK_MONOTONIC,&amp;now); 可以读取到当前的时间.<br>
+ 在所有线程开始读取前先调用这个函数，读取数据后调用。然后相减即可得到读取一次数据的时间.</p>
+<p>同样的，在 imgui 渲染线程里同样需要调用这个函数来计算渲染一次所需要的时间</p>
+<p>如果谁的时间少，就需要调用 usleep 函数来等待到 fps 值.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">usleep(time)</span><br></pre></td></tr></table></figure>
-
-<h2 id="imgui画框子-文字"><a href="#imgui画框子-文字" class="headerlink" title="imgui画框子,文字"></a>imgui画框子,文字</h2><p>1.imgui画框子</p>
+<h2 id="imgui画框子文字"><a class="markdownIt-Anchor" href="#imgui画框子文字"></a> imgui 画框子，文字</h2>
+<p>1.imgui 画框子</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawRect</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, <span class="type">int</span> w, <span class="type">int</span> h, RGBA *color, <span class="type">int</span> thickness)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddRect</span>(<span class="built_in">ImVec2</span>(x, y), <span class="built_in">ImVec2</span>(x + w, y + h), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), <span class="number">0</span>, <span class="number">0</span>, thickness);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>2.imgui画文字</p>
+<p>2.imgui 画文字</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawNewText</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, RGBA *color, <span class="type">const</span> <span class="type">char</span> *str)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddText</span>(<span class="built_in">ImVec2</span>(x, y), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), std::<span class="built_in">string</span>(str).<span class="built_in">c_str</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="https://pshocker.github.io/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/pic.jpg" alt="pic"></p>
 
@@ -376,39 +393,60 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在Android外部imgui绘制(一)里介绍了怎么实现一个外部imgui,其实还有一种方法,就是在aosp环境下编译一个可执行文件出来,有点类似于<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_executable_draw">可执行文件+skia绘制</a><br>但这个其实很麻烦,需要下载android源码(100多g),然后还要自己编译,最后还得修改代码.所以不太建议这么做.虽然效率可能确实会有提升.</p>
-<h2 id="获取触摸"><a href="#获取触摸" class="headerlink" title="获取触摸"></a>获取触摸</h2><p>在绘制imgui后,其实是没有触摸反馈的,原因很简单,在官方示例中,他的入口是</p>
+          <p>在 Android 外部 imgui 绘制 (一) 里介绍了怎么实现一个外部 imgui, 其实还有一种方法，就是在 aosp 环境下编译一个可执行文件出来，有点类似于<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_executable_draw">可执行文件 + skia 绘制</a><br>
+但这个其实很麻烦，需要下载 android 源码 (100 多 g), 然后还要自己编译，最后还得修改代码。所以不太建议这么做。虽然效率可能确实会有提升.</p>
+<h2 id="获取触摸"><a class="markdownIt-Anchor" href="#获取触摸"></a> 获取触摸</h2>
+<p>在绘制 imgui 后，其实是没有触摸反馈的，原因很简单，在官方示例中，他的入口是</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">android_main</span><span class="params">(<span class="keyword">struct</span> android_app* app)</span></span></span><br></pre></td></tr></table></figure>
-<p>这个就很像之前ndk-sample的native-activity了.<br><a target="_blank" rel="noopener" href="https://github.com/android/ndk-samples/tree/main/native-activity">https://github.com/android/ndk-samples/tree/main/native-activity</a><br>,其实可以把这个官方的imgui示例改造成native-activity.</p>
+<p>这个就很像之前 ndk-sample 的 native-activity 了.<br>
+<a target="_blank" rel="noopener" href="https://github.com/android/ndk-samples/tree/main/native-activity">https://github.com/android/ndk-samples/tree/main/native-activity</a><br>
+, 其实可以把这个官方的 imgui 示例改造成 native-activity.</p>
 <p>注意看官方示例</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Poll all events. If the app is not visible, this loop blocks until g_Initialized == true.</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="built_in">ALooper_pollAll</span>(g_Initialized ? <span class="number">0</span> : <span class="number">-1</span>, <span class="literal">NULL</span>, &amp;out_events, (<span class="type">void</span>**)&amp;out_data) &gt;= <span class="number">0</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// Process one event</span></span><br><span class="line">            <span class="keyword">if</span> (out_data != <span class="literal">NULL</span>)</span><br><span class="line">                out_data-&gt;<span class="built_in">process</span>(app, out_data);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Exit the app by returning from within the infinite loop</span></span><br><span class="line">            <span class="keyword">if</span> (app-&gt;destroyRequested != <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// shutdown() should have been called already while processing the</span></span><br><span class="line">                <span class="comment">// app command APP_CMD_TERM_WINDOW. But we play save here</span></span><br><span class="line">                <span class="keyword">if</span> (!g_Initialized)</span><br><span class="line">                    <span class="built_in">shutdown</span>();</span><br><span class="line"></span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
-<p>你就可以发现它是通过调用ALooper_pollAll来获取系统的输入事件,<br>然而在我们的hello-gl2代码里并不能通过ALooper_pollAll来获取输入事件的,<br>那么怎么获取系统输入呢?</p>
-<h3 id="ue4-找到android-app并hook-onInputEvent函数"><a href="#ue4-找到android-app并hook-onInputEvent函数" class="headerlink" title="(ue4) 找到android_app并hook onInputEvent函数"></a>(ue4) 找到android_app并hook onInputEvent函数</h3><p>这个方法可以在ue4的游戏中找到,可以把ue4的游戏理解成native-activity,然后找到android_app,在它的onInputEvent里挂钩子,将屏幕输入事件转发给imgui.</p>
-<h3 id="双悬浮窗"><a href="#双悬浮窗" class="headerlink" title="双悬浮窗"></a>双悬浮窗</h3><p>比较简单的实现方案,将一个<strong>可点击透明的悬浮窗覆盖在imgui窗口上</strong>,且该悬浮窗随着imgui窗口移动,把对该窗口的输入事件转发到imgui窗口里.</p>
-<h3 id="读取系统触摸"><a href="#读取系统触摸" class="headerlink" title="读取系统触摸"></a>读取系统触摸</h3><p>这个方法就是直接读系统输入的方法了,也就是安卓源码是怎么读取屏幕输入的.<br>原理就是读取&#x2F;dev&#x2F;input&#x2F;event?文件,这里的?表示代表屏幕输入文件的数字.</p>
+<p>你就可以发现它是通过调用 ALooper_pollAll 来获取系统的输入事件，<br>
+ 然而在我们的 hello-gl2 代码里并不能通过 ALooper_pollAll 来获取输入事件的，<br>
+ 那么怎么获取系统输入呢？</p>
+<h3 id="ue4-找到android_app并hook-oninputevent函数"><a class="markdownIt-Anchor" href="#ue4-找到android_app并hook-oninputevent函数"></a> (ue4) 找到 android_app 并 hook onInputEvent 函数</h3>
+<p>这个方法可以在 ue4 的游戏中找到，可以把 ue4 的游戏理解成 native-activity, 然后找到 android_app, 在它的 onInputEvent 里挂钩子，将屏幕输入事件转发给 imgui.</p>
+<h3 id="双悬浮窗"><a class="markdownIt-Anchor" href="#双悬浮窗"></a> 双悬浮窗</h3>
+<p>比较简单的实现方案，将一个<strong>可点击透明的悬浮窗覆盖在 imgui 窗口上</strong>，且该悬浮窗随着 imgui 窗口移动，把对该窗口的输入事件转发到 imgui 窗口里.</p>
+<h3 id="读取系统触摸"><a class="markdownIt-Anchor" href="#读取系统触摸"></a> 读取系统触摸</h3>
+<p>这个方法就是直接读系统输入的方法了，也就是安卓源码是怎么读取屏幕输入的.<br>
+ 原理就是读取 /dev/input/event? 文件，这里的？表示代表屏幕输入文件的数字.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">sprintf</span>(dev_name, <span class="string">&quot;/dev/input/event%d&quot;</span>, i);</span><br><span class="line">fd = <span class="built_in">open</span>(dev_name, O_RDWR);</span><br></pre></td></tr></table></figure>
-<p>然后将原始的屏幕输入转成安卓的屏幕输入.最后传给imgui即可.<br>这里可以参考<br><a target="_blank" rel="noopener" href="https://blog.csdn.net/a694543965/article/details/79935086">linux读取触摸屏事件数据</a><br>至于怎么加工原始的输入数据,可以参考安卓源码.</p>
-<p>在我的手机上,触摸屏的分辨率是14400x32000.<br>而我的屏幕分辨率是1080x2400.<br>所以需要进一步转换.<br>大致如下:</p>
+<p>然后将原始的屏幕输入转成安卓的屏幕输入。最后传给 imgui 即可.<br>
+ 这里可以参考<br>
+<a target="_blank" rel="noopener" href="https://blog.csdn.net/a694543965/article/details/79935086"> linux 读取触摸屏事件数据</a><br>
+至于怎么加工原始的输入数据，可以参考安卓源码.</p>
+<p>在我的手机上，触摸屏的分辨率是 14400x32000.<br>
+ 而我的屏幕分辨率是 1080x2400.<br>
+ 所以需要进一步转换.<br>
+ 大致如下:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">x = (x-xmin) * 手机像素宽 / (xmax-xmin);</span><br><span class="line">y = (y-ymin) * 手机像素高 / (ymax-ymin);</span><br></pre></td></tr></table></figure>
-<p>这里xmin,xmax,ymin,ymax可以通过命令拿到.</p>
+<p>这里 xmin,xmax,ymin,ymax 可以通过命令拿到.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">getevent -p /dev/input/event7</span><br></pre></td></tr></table></figure>
 <p><img src="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/event.png" alt="event"></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0035  : value 0, min 0, max 14399, fuzz 0, flat 0, resolution 0</span><br><span class="line">0036  : value 0, min 0, max 31999, fuzz 0, flat 0, resolution 0</span><br></pre></td></tr></table></figure>
-
-<p>屏幕像素可以通过getRealMetrics获取.</p>
+<p>屏幕像素可以通过 getRealMetrics 获取.</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">DisplayMetrics</span> <span class="variable">dm</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">DisplayMetrics</span>();</span><br><span class="line">getWindowManager().getDefaultDisplay().getRealMetrics(dm);</span><br><span class="line"><span class="type">int</span> <span class="variable">widthPixel</span> <span class="operator">=</span> dm.widthPixels;</span><br><span class="line"><span class="type">int</span> <span class="variable">heightPixel</span> <span class="operator">=</span> dm.heightPixels;</span><br></pre></td></tr></table></figure>
-<p>参考<br><a target="_blank" rel="noopener" href="https://www.sohu.com/a/319671175_120058529?qq-pf-to=pcqq.c2c">Android从触碰屏幕开始的事件采集，解析及分发(1)</a>.</p>
-<h2 id="屏幕旋转判断"><a href="#屏幕旋转判断" class="headerlink" title="屏幕旋转判断"></a>屏幕旋转判断</h2><p>当屏幕旋转后系统会回调onSurfaceChanged方法<br>在onSurfaceChanged里读取屏幕旋转方向,然后将屏幕方向赋值给native的全局变量.</p>
+<p>参考<br>
+<a target="_blank" rel="noopener" href="https://www.sohu.com/a/319671175_120058529?qq-pf-to=pcqq.c2c"> Android 从触碰屏幕开始的事件采集，解析及分发 (1)</a>.</p>
+<h2 id="屏幕旋转判断"><a class="markdownIt-Anchor" href="#屏幕旋转判断"></a> 屏幕旋转判断</h2>
+<p>当屏幕旋转后系统会回调 onSurfaceChanged 方法<br>
+在 onSurfaceChanged 里读取屏幕旋转方向，然后将屏幕方向赋值给 native 的全局变量.</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onSurfaceChanged</span><span class="params">(GL10 gl, <span class="type">int</span> width, <span class="type">int</span> height)</span> &#123;</span><br><span class="line">            set_ImGui_Orientation(MainActivity.windowManager.getDefaultDisplay().getOrientation());</span><br><span class="line">            update_ImGui(width,height);</span><br><span class="line">        &#125;</span><br></pre></td></tr></table></figure>
-<h3 id="屏幕旋转后输入事件的处理"><a href="#屏幕旋转后输入事件的处理" class="headerlink" title="屏幕旋转后输入事件的处理"></a>屏幕旋转后输入事件的处理</h3><p>旋转后,屏幕坐标会旋转,但是读取到的输入坐标不会改变,此时需要将横坐标改为纵坐标,横坐标改为屏幕宽度减去横坐标.</p>
+<h3 id="屏幕旋转后输入事件的处理"><a class="markdownIt-Anchor" href="#屏幕旋转后输入事件的处理"></a> 屏幕旋转后输入事件的处理</h3>
+<p>旋转后，屏幕坐标会旋转，但是读取到的输入坐标不会改变，此时需要将横坐标改为纵坐标，横坐标改为屏幕宽度减去横坐标.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">io.MousePos = <span class="built_in">ImVec2</span>(y, physic_w - x);</span><br></pre></td></tr></table></figure>
-
-<h2 id="Android12的改进"><a href="#Android12的改进" class="headerlink" title="Android12的改进"></a>Android12的改进</h2><p>按照官方说明<br><a target="_blank" rel="noopener" href="https://developer.android.com/about/versions/12/behavior-changes-all?hl=zh-cn#untrusted-touch-events">不受信任的触摸事件被屏蔽</a>.<br>需要做出如下改动</p>
+<h2 id="android12的改进"><a class="markdownIt-Anchor" href="#android12的改进"></a> Android12 的改进</h2>
+<p>按照官方说明<br>
+<a target="_blank" rel="noopener" href="https://developer.android.com/about/versions/12/behavior-changes-all?hl=zh-cn#untrusted-touch-events">不受信任的触摸事件被屏蔽</a>.<br>
+ 需要做出如下改动</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"># A specific app</span><br><span class="line">adb shell am compat disable BLOCK_UNTRUSTED_TOUCHES com.example.app</span><br><span class="line"></span><br><span class="line"># All apps</span><br><span class="line"># If you&#x27;d still like to see a Logcat message warning when a touch would be</span><br><span class="line"># blocked, use 1 instead of 0.</span><br><span class="line">adb shell settings put global block_untrusted_touches 0</span><br></pre></td></tr></table></figure>
-
 <p>你可以直接敲下面的命令</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell settings put global block_untrusted_touches 0</span><br></pre></td></tr></table></figure>
-<p>之后你的imgui就可以随意的拖动,点击了.</p>
+<p>之后你的 imgui 就可以随意的拖动，点击了.</p>
 
       
     </div>
@@ -473,26 +511,44 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>上篇文章通过Magisk Hook eglSwapBuffers实现绘制,但是某些使用ue4引擎制作的游戏却并不能绘制成功.-_-<br>那就只能用悬浮窗的办法来绘制一个悬浮的imgui.</p>
-<h2 id="方案"><a href="#方案" class="headerlink" title="方案"></a>方案</h2><p>注意到,imgui的绘制基本上都借助了opengl函数.而且imgui也有官方的安卓版本示例.<br><a target="_blank" rel="noopener" href="https://github.com/ocornut/imgui">https://github.com/ocornut/imgui</a><br>基本上可以确定要用ndk开发.</p>
-<p>其实opengl在ndk的官方示例里也有.<br><a target="_blank" rel="noopener" href="https://github.com/android/ndk-samples">https://github.com/android/ndk-samples</a></p>
+          <h2 id="前言"><a class="markdownIt-Anchor" href="#前言"></a> 前言</h2>
+<p>上篇文章通过 Magisk Hook eglSwapBuffers 实现绘制，但是某些使用 ue4 引擎制作的游戏却并不能绘制成功.-_-<br>
+ 那就只能用悬浮窗的办法来绘制一个悬浮的 imgui.</p>
+<h2 id="方案"><a class="markdownIt-Anchor" href="#方案"></a> 方案</h2>
+<p>注意到，imgui 的绘制基本上都借助了 opengl 函数。而且 imgui 也有官方的安卓版本示例.<br>
+<a target="_blank" rel="noopener" href="https://github.com/ocornut/imgui">https://github.com/ocornut/imgui</a><br>
+ 基本上可以确定要用 ndk 开发.</p>
+<p>其实 opengl 在 ndk 的官方示例里也有.<br>
+<a target="_blank" rel="noopener" href="https://github.com/android/ndk-samples">https://github.com/android/ndk-samples</a></p>
 <p><img src="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%80/github.jpg" alt="github"></p>
-<p>gles3jni是opengl3的<br>hello-gl2是opengl2的<br>选哪个都可以<br>我选的是hello-gl2.</p>
-<p>然后把imgui的代码clone下来丢到cpp文件夹里面<br><img src="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%80/imgui.jpg" alt="imgui"><br>如图所示.</p>
-<p>然后打开<br>GL2JNIView.java<br>设置透明为true</p>
+<p>gles3jni 是 opengl3 的<br>
+ hello-gl2 是 opengl2 的<br>
+选哪个都可以<br>
+我选的是 hello-gl2.</p>
+<p>然后把 imgui 的代码 clone 下来丢到 cpp 文件夹里面<br>
+<img src="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%80/imgui.jpg" alt="imgui"><br>
+ 如图所示.</p>
+<p>然后打开<br>
+ GL2JNIView.java<br>
+ 设置透明为 true</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">GL2JNIView</span><span class="params">(Context context)</span> </span>&#123;</span><br><span class="line">        <span class="built_in">super</span>(context);</span><br><span class="line">        <span class="built_in">init</span>(<span class="literal">true</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>只需要修改Renderer类的onDrawFrame,onSurfaceChanged,onSurfaceCreated就行.</p>
-<h3 id="onSurfaceCreated"><a href="#onSurfaceCreated" class="headerlink" title="onSurfaceCreated"></a>onSurfaceCreated</h3><p>在onSurfaceCreated里完成imgui的初始化即可,没啥特别的.把imgui初始化的代码copy过来就行</p>
+<p>只需要修改 Renderer 类的 onDrawFrame,onSurfaceChanged,onSurfaceCreated 就行.</p>
+<h3 id="onsurfacecreated"><a class="markdownIt-Anchor" href="#onsurfacecreated"></a> onSurfaceCreated</h3>
+<p>在 onSurfaceCreated 里完成 imgui 的初始化即可，没啥特别的。把 imgui 初始化的代码 copy 过来就行</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">IMGUI_CHECKVERSION</span>();</span><br><span class="line">ImGui::<span class="built_in">CreateContext</span>();</span><br><span class="line">ImGuiIO&amp; io = ImGui::<span class="built_in">GetIO</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// Disable loading/saving of .ini file from disk.</span></span><br><span class="line"><span class="comment">// <span class="doctag">FIXME:</span> Consider using LoadIniSettingsFromMemory() / SaveIniSettingsToMemory() to save in appropriate location for Android.</span></span><br><span class="line">io.IniFilename = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup Dear ImGui style</span></span><br><span class="line">ImGui::<span class="built_in">StyleColorsDark</span>();</span><br><span class="line"><span class="comment">//ImGui::StyleColorsClassic();</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup Platform/Renderer backends</span></span><br><span class="line"><span class="built_in">ImGui_ImplAndroid_Init</span>(<span class="literal">nullptr</span>);</span><br><span class="line"><span class="built_in">ImGui_ImplOpenGL3_Init</span>(<span class="string">&quot;#version 300 es&quot;</span>);</span><br><span class="line">g_Initialized = <span class="literal">true</span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="onSurfaceChanged"><a href="#onSurfaceChanged" class="headerlink" title="onSurfaceChanged"></a>onSurfaceChanged</h3><p>这个函数一般会在屏幕旋转的时候调用,这里重新设置下imgui的大小就行</p>
+<h3 id="onsurfacechanged"><a class="markdownIt-Anchor" href="#onsurfacechanged"></a> onSurfaceChanged</h3>
+<p>这个函数一般会在屏幕旋转的时候调用，这里重新设置下 imgui 的大小就行</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">glViewport</span>(<span class="number">0</span>, <span class="number">0</span>, width, height);</span><br><span class="line">ImGui::<span class="built_in">GetIO</span>().DisplaySize = <span class="built_in">ImVec2</span>((<span class="type">float</span>)width, (<span class="type">float</span>)height);</span><br></pre></td></tr></table></figure>
-<h3 id="onDrawFrame"><a href="#onDrawFrame" class="headerlink" title="onDrawFrame"></a>onDrawFrame</h3><p>这个函数就是imgui的绘制函数了.这里也基本上可以照搬imgui的tick函数.</p>
+<h3 id="ondrawframe"><a class="markdownIt-Anchor" href="#ondrawframe"></a> onDrawFrame</h3>
+<p>这个函数就是 imgui 的绘制函数了。这里也基本上可以照搬 imgui 的 tick 函数.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">tick</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGuiIO&amp; io = ImGui::<span class="built_in">GetIO</span>();</span><br><span class="line">    <span class="keyword">if</span> (g_EglDisplay == EGL_NO_DISPLAY)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Our state</span></span><br><span class="line">    <span class="type">static</span> <span class="type">bool</span> show_demo_window = <span class="literal">true</span>;</span><br><span class="line">    <span class="type">static</span> <span class="type">bool</span> show_another_window = <span class="literal">false</span>;</span><br><span class="line">    <span class="type">static</span> ImVec4 clear_color = <span class="built_in">ImVec4</span>(<span class="number">0.45f</span>, <span class="number">0.55f</span>, <span class="number">0.60f</span>, <span class="number">1.00f</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Poll Unicode characters via JNI</span></span><br><span class="line">    <span class="comment">// <span class="doctag">FIXME:</span> do not call this every frame because of JNI overhead</span></span><br><span class="line">    <span class="built_in">PollUnicodeChars</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Open on-screen (soft) input if requested by Dear ImGui</span></span><br><span class="line">    <span class="type">static</span> <span class="type">bool</span> WantTextInputLast = <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">if</span> (io.WantTextInput &amp;&amp; !WantTextInputLast)</span><br><span class="line">        <span class="built_in">ShowSoftKeyboardInput</span>();</span><br><span class="line">    WantTextInputLast = io.WantTextInput;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Start the Dear ImGui frame</span></span><br><span class="line">    <span class="built_in">ImGui_ImplOpenGL3_NewFrame</span>();</span><br><span class="line">    <span class="built_in">ImGui_ImplAndroid_NewFrame</span>();</span><br><span class="line">    ImGui::<span class="built_in">NewFrame</span>();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).</span></span><br><span class="line">    <span class="keyword">if</span> (show_demo_window)</span><br><span class="line">        ImGui::<span class="built_in">ShowDemoWindow</span>(&amp;show_demo_window);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">static</span> <span class="type">float</span> f = <span class="number">0.0f</span>;</span><br><span class="line">        <span class="type">static</span> <span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        ImGui::<span class="built_in">Begin</span>(<span class="string">&quot;Hello, world!&quot;</span>); <span class="comment">// Create a window called &quot;Hello, world!&quot; and append into it.</span></span><br><span class="line"></span><br><span class="line">        ImGui::<span class="built_in">Text</span>(<span class="string">&quot;This is some useful text.&quot;</span>);               <span class="comment">// Display some text (you can use a format strings too)</span></span><br><span class="line">        ImGui::<span class="built_in">Checkbox</span>(<span class="string">&quot;Demo Window&quot;</span>, &amp;show_demo_window);      <span class="comment">// Edit bools storing our window open/close state</span></span><br><span class="line">        ImGui::<span class="built_in">Checkbox</span>(<span class="string">&quot;Another Window&quot;</span>, &amp;show_another_window);</span><br><span class="line"></span><br><span class="line">        ImGui::<span class="built_in">SliderFloat</span>(<span class="string">&quot;float&quot;</span>, &amp;f, <span class="number">0.0f</span>, <span class="number">1.0f</span>);            <span class="comment">// Edit 1 float using a slider from 0.0f to 1.0f</span></span><br><span class="line">        ImGui::<span class="built_in">ColorEdit3</span>(<span class="string">&quot;clear color&quot;</span>, (<span class="type">float</span>*)&amp;clear_color); <span class="comment">// Edit 3 floats representing a color</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (ImGui::<span class="built_in">Button</span>(<span class="string">&quot;Button&quot;</span>))                            <span class="comment">// Buttons return true when clicked (most widgets return true when edited/activated)</span></span><br><span class="line">            counter++;</span><br><span class="line">        ImGui::<span class="built_in">SameLine</span>();</span><br><span class="line">        ImGui::<span class="built_in">Text</span>(<span class="string">&quot;counter = %d&quot;</span>, counter);</span><br><span class="line"></span><br><span class="line">        ImGui::<span class="built_in">Text</span>(<span class="string">&quot;Application average %.3f ms/frame (%.1f FPS)&quot;</span>, <span class="number">1000.0f</span> / ImGui::<span class="built_in">GetIO</span>().Framerate, ImGui::<span class="built_in">GetIO</span>().Framerate);</span><br><span class="line">        ImGui::<span class="built_in">End</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. Show another simple window.</span></span><br><span class="line">    <span class="keyword">if</span> (show_another_window)</span><br><span class="line">    &#123;</span><br><span class="line">        ImGui::<span class="built_in">Begin</span>(<span class="string">&quot;Another Window&quot;</span>, &amp;show_another_window);   <span class="comment">// Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)</span></span><br><span class="line">        ImGui::<span class="built_in">Text</span>(<span class="string">&quot;Hello from another window!&quot;</span>);</span><br><span class="line">        <span class="keyword">if</span> (ImGui::<span class="built_in">Button</span>(<span class="string">&quot;Close Me&quot;</span>))</span><br><span class="line">            show_another_window = <span class="literal">false</span>;</span><br><span class="line">        ImGui::<span class="built_in">End</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Rendering</span></span><br><span class="line">    ImGui::<span class="built_in">Render</span>();</span><br><span class="line">    <span class="built_in">glViewport</span>(<span class="number">0</span>, <span class="number">0</span>, (<span class="type">int</span>)io.DisplaySize.x, (<span class="type">int</span>)io.DisplaySize.y);</span><br><span class="line">    <span class="built_in">glClearColor</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="built_in">glClear</span>(GL_COLOR_BUFFER_BIT);</span><br><span class="line">    <span class="built_in">ImGui_ImplOpenGL3_RenderDrawData</span>(ImGui::<span class="built_in">GetDrawData</span>());</span><br><span class="line">    <span class="comment">// eglSwapBuffers(g_EglDisplay, g_EglSurface);</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>不过这里貌似不需要调用eglSwapBuffers函数.</p>
-<h3 id="悬浮窗"><a href="#悬浮窗" class="headerlink" title="悬浮窗"></a>悬浮窗</h3><p>没啥好说的,直接参考我之前的github或者52论坛都行<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_float_view_draw">https://github.com/PShocker/Android_float_view_draw</a><br><a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1584152-1-1.html">https://www.52pojie.cn/thread-1584152-1-1.html</a></p>
-<h2 id="注意"><a href="#注意" class="headerlink" title="注意"></a>注意</h2><p>在我的安卓12的版本上,如果要添加悬浮窗必须要添加悬浮窗权限.先判断是否有权限然后再申请</p>
+<p>不过这里貌似不需要调用 eglSwapBuffers 函数.</p>
+<h3 id="悬浮窗"><a class="markdownIt-Anchor" href="#悬浮窗"></a> 悬浮窗</h3>
+<p>没啥好说的，直接参考我之前的 github 或者 52 论坛都行<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_float_view_draw"> https://github.com/PShocker/Android_float_view_draw</a><br>
+<a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1584152-1-1.html">https://www.52pojie.cn/thread-1584152-1-1.html</a></p>
+<h2 id="注意"><a class="markdownIt-Anchor" href="#注意"></a> 注意</h2>
+<p>在我的安卓 12 的版本上，如果要添加悬浮窗必须要添加悬浮窗权限。先判断是否有权限然后再申请</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (android.os.Build.VERSION.SDK_INT &gt;= <span class="number">23</span> &amp;&amp; !Settings.canDrawOverlays(<span class="built_in">this</span>)) &#123;</span><br><span class="line">    <span class="type">Intent</span> <span class="variable">intent</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Intent</span>(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse(<span class="string">&quot;package:&quot;</span> + getPackageName()));</span><br><span class="line">    startActivityForResult(intent, <span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%80/aqtw.jpg" alt="aqtw"></p>
 
@@ -553,27 +609,42 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>很早之前就听说过修改内核源码过反调试检测,于是我直接打开小米的github上去找内核源码编译,然而小米12的源代码开源的并不是很彻底,缺少了一堆东西,还没法编译.-_-</p>
-<p>那既然弄不到内核源码来编译,那我逆向你的内核总该可以吧.</p>
-<p><a target="_blank" rel="noopener" href="https://xiaomirom.com/rom/xiaomi-12-pro-zeus-china-fastboot-recovery-rom/#%E4%B8%8B%E8%BD%BD-%E5%B0%8F%E7%B1%B3-12-pro-%E5%BC%80%E5%8F%91%E7%89%88%E5%86%85%E6%B5%8B%E7%89%88-fastboot-%E7%BA%BF%E5%88%B7%E5%8C%85">小米rom下载地址</a></p>
-<p>下载对应版本的线刷包<br>用7z打开<br>把boot.img提取出来<br><img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/boot.jpg" alt="boot"></p>
-<h2 id="解包"><a href="#解包" class="headerlink" title="解包"></a>解包</h2><p>现在百度到的解包基本上都已经过时或者不可用了,但是没关系,我们可以借助Magisk的magiskboot来帮忙.</p>
-<p>下载Magisk apk,用7z打开进入lib目录<br><img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/magiskboot.jpg" alt="magiskboot"></p>
-<p>把libmagiskboot.so拖出来.注意,这个libmagiskboot.so其实是一个可执行文件.<br>把它改成magiskboot即可.</p>
-<p>把这个和boot.img丢到你手机的&#x2F;data&#x2F;local&#x2F;tmp里</p>
+          <p>很早之前就听说过修改内核源码过反调试检测，于是我直接打开小米的 github 上去找内核源码编译，然而小米 12 的源代码开源的并不是很彻底，缺少了一堆东西，还没法编译.-_-</p>
+<p>那既然弄不到内核源码来编译，那我逆向你的内核总该可以吧.</p>
+<p><a target="_blank" rel="noopener" href="https://xiaomirom.com/rom/xiaomi-12-pro-zeus-china-fastboot-recovery-rom/#%E4%B8%8B%E8%BD%BD-%E5%B0%8F%E7%B1%B3-12-pro-%E5%BC%80%E5%8F%91%E7%89%88%E5%86%85%E6%B5%8B%E7%89%88-fastboot-%E7%BA%BF%E5%88%B7%E5%8C%85">小米 rom 下载地址</a></p>
+<p>下载对应版本的线刷包<br>
+用 7z 打开<br>
+把 boot.img 提取出来<br>
+<img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/boot.jpg" alt="boot"></p>
+<h2 id="解包"><a class="markdownIt-Anchor" href="#解包"></a> 解包</h2>
+<p>现在百度到的解包基本上都已经过时或者不可用了，但是没关系，我们可以借助 Magisk 的 magiskboot 来帮忙.</p>
+<p>下载 Magisk apk, 用 7z 打开进入 lib 目录<br>
+<img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/magiskboot.jpg" alt="magiskboot"></p>
+<p>把 libmagiskboot.so 拖出来。注意，这个 libmagiskboot.so 其实是一个可执行文件.<br>
+ 把它改成 magiskboot 即可.</p>
+<p>把这个和 boot.img 丢到你手机的 /data/local/tmp 里</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot unpack boot.img</span><br></pre></td></tr></table></figure>
-<p>就可以把kernel文件解包出来了.</p>
-<h2 id="修改"><a href="#修改" class="headerlink" title="修改"></a>修改</h2><p>直接用ida打开kernel文件,shift+f12搜索</p>
+<p>就可以把 kernel 文件解包出来了.</p>
+<h2 id="修改"><a class="markdownIt-Anchor" href="#修改"></a> 修改</h2>
+<p>直接用 ida 打开 kernel 文件，shift+f12 搜索</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TracerPid</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid.jpg" alt="Tracerpid"><br><img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid2.jpg" alt="Tracerpid2"><br>双击进去查找交叉引用(快捷键X),点进去就看到了代码.<br>然后把</p>
+<p><img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid.jpg" alt="Tracerpid"><br>
+<img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/Tracerpid2.jpg" alt="Tracerpid2"><br>
+ 双击进去查找交叉引用 (快捷键 X), 点进去就看到了代码.<br>
+ 然后把</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MOV X2, X22</span><br></pre></td></tr></table></figure>
 <p>改成</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">MOV X2, #0</span><br></pre></td></tr></table></figure>
-<p>就行.<br><img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/patch.jpg" alt="patch"></p>
-<h2 id="重打包"><a href="#重打包" class="headerlink" title="重打包"></a>重打包</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot repack boot.img</span><br></pre></td></tr></table></figure>
-<h2 id="刷入新的boot-img"><a href="#刷入新的boot-img" class="headerlink" title="刷入新的boot.img"></a>刷入新的boot.img</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adb reboot fastboot</span><br><span class="line">fastboot flash boot boot.img</span><br></pre></td></tr></table></figure>
-
-<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>本文主要参考了<br><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-271179.htm#msg_header_h1_4">绕过Android内核模块加载验证</a>.<br>谢谢这位大佬.</p>
+<p>就行.<br>
+<img src="https://pshocker.github.io/2022/03/21/MIUI13%E9%80%86%E5%90%91%E4%BF%AE%E6%94%B9%E5%86%85%E6%A0%B8%E5%8E%BB%E6%8E%89%E5%8F%8D%E8%B0%83%E8%AF%95%E6%A3%80%E6%B5%8B/patch.jpg" alt="patch"></p>
+<h2 id="重打包"><a class="markdownIt-Anchor" href="#重打包"></a> 重打包</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">./magiskboot repack boot.img</span><br></pre></td></tr></table></figure>
+<h2 id="刷入新的bootimg"><a class="markdownIt-Anchor" href="#刷入新的bootimg"></a> 刷入新的 boot.img</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">adb reboot fastboot</span><br><span class="line">fastboot flash boot boot.img</span><br></pre></td></tr></table></figure>
+<h2 id="最后"><a class="markdownIt-Anchor" href="#最后"></a> 最后</h2>
+<p>本文主要参考了<br>
+<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-271179.htm#msg_header_h1_4">绕过 Android 内核模块加载验证</a>.<br>
+ 谢谢这位大佬.</p>
 
       
     </div>
@@ -638,20 +709,27 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>之前我在52上发了一个帖,<a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1587797-1-1.html">Android几种特殊绘制方框方法</a>,其中有说到Hook Surfaceflinger进程的eglSwapBuffers函数.<br>实际上,在安卓12里,Surfaceflinger进程已经没有eglSwapBuffers函数了,而且注入的模板也要改进.<br>需要关闭selinux并且要把linker和libc的路径分别改为</p>
+          <p>之前我在 52 上发了一个帖，<a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1587797-1-1.html">Android 几种特殊绘制方框方法</a>，其中有说到 Hook Surfaceflinger 进程的 eglSwapBuffers 函数.<br>
+ 实际上，在安卓 12 里，Surfaceflinger 进程已经没有 eglSwapBuffers 函数了，而且注入的模板也要改进.<br>
+ 需要关闭 selinux 并且要把 linker 和 libc 的路径分别改为</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/apex/com.android.runtime/bin/linker64</span><br><span class="line">/apex/com.android.runtime/lib64/bionic/libc.so</span><br></pre></td></tr></table></figure>
-<p>具体可以看这篇github<br><a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">https://github.com/SsageParuders/AndroidPtraceInject</a></p>
-<p>说回正题,既然Surfaceflinger进程没有eglSwapBuffers函数,那么eglSwapBuffers肯定是在app内部调用的,直接hook了app内部eglSwapBuffers函数就行.</p>
+<p>具体可以看这篇 github<br>
+<a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">https://github.com/SsageParuders/AndroidPtraceInject</a></p>
+<p>说回正题，既然 Surfaceflinger 进程没有 eglSwapBuffers 函数，那么 eglSwapBuffers 肯定是在 app 内部调用的，直接 hook 了 app 内部 eglSwapBuffers 函数就行.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">init_dobby</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">void</span> *sym_eglSwapBuffers = <span class="built_in">DobbySymbolResolver</span>(<span class="literal">NULL</span>, <span class="string">&quot;eglSwapBuffers&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != sym_eglSwapBuffers)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;sym_eglSwapBuffers:%llx&quot;</span>, (<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span>)sym_eglSwapBuffers);</span><br><span class="line">        <span class="built_in">DobbyHook</span>(sym_eglSwapBuffers, (<span class="type">void</span> *)new_eglSwapBuffers, (<span class="type">void</span> **)&amp;ori_eglSwapBuffers);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我这里选用Dobby的hook框架,参考了<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&utm_campaign=toutiao.io&utm_medium=toutiao.io&utm_source=toutiao.io">使用Magisk+riru实现全局改机</a>的用法.</p>
-<p>在hook后的new_eglSwapBuffers里完成imgui的初始化,显示即可.基本上不需要怎么改动imgui的代码.</p>
+<p>我这里选用 Dobby 的 hook 框架，参考了<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&amp;utm_campaign=toutiao.io&amp;utm_medium=toutiao.io&amp;utm_source=toutiao.io">使用 Magisk+riru 实现全局改机</a>的用法.</p>
+<p>在 hook 后的 new_eglSwapBuffers 里完成 imgui 的初始化，显示即可。基本上不需要怎么改动 imgui 的代码.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">IMGUI_CHECKVERSION</span>();</span><br><span class="line">ImGui::<span class="built_in">CreateContext</span>();</span><br><span class="line">ImGuiIO&amp; io = ImGui::<span class="built_in">GetIO</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// Disable loading/saving of .ini file from disk.</span></span><br><span class="line"><span class="comment">// <span class="doctag">FIXME:</span> Consider using LoadIniSettingsFromMemory() / SaveIniSettingsToMemory() to save in appropriate location for Android.</span></span><br><span class="line">io.IniFilename = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup Dear ImGui style</span></span><br><span class="line">ImGui::<span class="built_in">StyleColorsDark</span>();</span><br><span class="line"><span class="comment">//ImGui::StyleColorsClassic();</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup Platform/Renderer backends</span></span><br><span class="line"><span class="built_in">ImGui_ImplAndroid_Init</span>(<span class="literal">nullptr</span>);</span><br><span class="line"><span class="built_in">ImGui_ImplOpenGL3_Init</span>(<span class="string">&quot;#version 300 es&quot;</span>);</span><br><span class="line">g_Initialized = <span class="literal">true</span>;</span><br><span class="line">.......</span><br></pre></td></tr></table></figure>
-
-<p>之后用Zygisk-ModuleTemplate模板编译,magisk安装就行.</p>
+<p>之后用 Zygisk-ModuleTemplate 模板编译，magisk 安装就行.</p>
 <p>不足之处:</p>
-<p>1.由于和游戏共用surface,如果绘制异常游戏直接闪退.<br>2.进行复杂绘制的时候会卡游戏画面,降低帧率.<br>3.兼容性差,不支持大部分的ue4引擎的游戏.</p>
-<p>完美的内部绘制方案参考<br><strong><a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/">Magisk注入app并嵌入imgui(二)</a></strong></p>
-<p>最后效果如图<br><img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/xdwzx.jpg"><br><img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/wzry.jpg"></p>
+<p>1. 由于和游戏共用 surface, 如果绘制异常游戏直接闪退.<br>
+2. 进行复杂绘制的时候会卡游戏画面，降低帧率.<br>
+3. 兼容性差，不支持大部分的 ue4 引擎的游戏.</p>
+<p>完美的内部绘制方案参考<br>
+<strong><a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/"> Magisk 注入 app 并嵌入 imgui (二)</a></strong></p>
+<p>最后效果如图<br>
+<img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/xdwzx.jpg" alt><br>
+<img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/wzry.jpg" alt></p>
 
       
     </div>
@@ -716,13 +794,16 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>最近Magisk出了一个Zygisk,貌似是要取代Riru,我查了许多资料貌似它还是zygote注入,但他有一个排除列表.很强势,可惜的是wu大并没有给一个一键打包生成的Zygisk模板,莫得办法,只能自己搞一个了.</p>
-<p>wu大给的模板地址在这里<br><a target="_blank" rel="noopener" href="https://github.com/topjohnwu/zygisk-module-sample">https://github.com/topjohnwu/zygisk-module-sample</a></p>
+          <p>最近 Magisk 出了一个 Zygisk, 貌似是要取代 Riru, 我查了许多资料貌似它还是 zygote 注入，但他有一个排除列表。很强势，可惜的是 wu 大并没有给一个一键打包生成的 Zygisk 模板，莫得办法，只能自己搞一个了.</p>
+<p>wu 大给的模板地址在这里<br>
+<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/zygisk-module-sample"> https://github.com/topjohnwu/zygisk-module-sample</a></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">module_id</span><br><span class="line">├── module.prop</span><br><span class="line">└── zygisk</span><br><span class="line">    ├── arm64-v8a.so</span><br><span class="line">    ├── armeabi-v7a.so</span><br><span class="line">    ├── x86.so</span><br><span class="line">    └── x86_64.so</span><br></pre></td></tr></table></figure>
-<p>大致意思就是创建这么一个文件结构,把生成的文件按照上图结构放到&#x2F;data&#x2F;adb&#x2F;modules里,好在Riru的模板可以自动生成一个zip包.</p>
-<p>那么抄就完事了<br><a target="_blank" rel="noopener" href="https://github.com/RikkaApps/Riru-ModuleTemplate">https://github.com/RikkaApps/Riru-ModuleTemplate</a></p>
-<p>大家可以试试把<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&utm_campaign=toutiao.io&utm_medium=toutiao.io&utm_source=toutiao.io">使用Magisk+riru实现全局改机</a>改成Zygisk版.</p>
-<p>本文所用Zygisk-ModuleTemplate模板地址:<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Zygisk-ModuleTemplate">https://github.com/PShocker/Zygisk-ModuleTemplate</a></p>
+<p>大致意思就是创建这么一个文件结构，把生成的文件按照上图结构放到 /data/adb/modules 里，好在 Riru 的模板可以自动生成一个 zip 包.</p>
+<p>那么抄就完事了<br>
+<a target="_blank" rel="noopener" href="https://github.com/RikkaApps/Riru-ModuleTemplate"> https://github.com/RikkaApps/Riru-ModuleTemplate</a></p>
+<p>大家可以试试把<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&amp;utm_campaign=toutiao.io&amp;utm_medium=toutiao.io&amp;utm_source=toutiao.io">使用 Magisk+riru 实现全局改机</a>改成 Zygisk 版.</p>
+<p>本文所用 Zygisk-ModuleTemplate 模板地址:<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/Zygisk-ModuleTemplate">https://github.com/PShocker/Zygisk-ModuleTemplate</a></p>
 
       
     </div>

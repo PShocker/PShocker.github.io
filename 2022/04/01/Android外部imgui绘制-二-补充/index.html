@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="前几天看到评论区有个小伙伴问我,ue4游戏怎么寻找android_app和获取系统输入.我在这说一下. 获取android_app基址偏移法首先,需要找到libUE4.so的android_main函数.ida进入android_main函数后按F5,可以发现有一个全局变量保存了这个android_app变量.那么它的地址就是 1libUE4.so(基址)+A36E1D0  注入Hook法 (Ma">
+  <meta name="description" content="前几天看到评论区有个小伙伴问我，ue4 游戏怎么寻找 android_app 和获取系统输入.  我在这说一下.  获取 android_app  基址偏移法 首先，需要找到 libUE4.so 的 android_main 函数.  ida 进入 android_main 函数后按 F5,   可以发现有一个全局变量保存了这个 android_app 变量.  那么它的地址就是 1libUE4.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android外部imgui绘制(二)--补充">
 <meta property="og:url" content="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="前几天看到评论区有个小伙伴问我,ue4游戏怎么寻找android_app和获取系统输入.我在这说一下. 获取android_app基址偏移法首先,需要找到libUE4.so的android_main函数.ida进入android_main函数后按F5,可以发现有一个全局变量保存了这个android_app变量.那么它的地址就是 1libUE4.so(基址)+A36E1D0  注入Hook法 (Ma">
+<meta property="og:description" content="前几天看到评论区有个小伙伴问我，ue4 游戏怎么寻找 android_app 和获取系统输入.  我在这说一下.  获取 android_app  基址偏移法 首先，需要找到 libUE4.so 的 android_main 函数.  ida 进入 android_main 函数后按 F5,   可以发现有一个全局变量保存了这个 android_app 变量.  那么它的地址就是 1libUE4.">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/ida_f5.png">
@@ -211,22 +211,33 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>前几天看到评论区有个小伙伴问我,ue4游戏怎么寻找android_app和获取系统输入.<br>我在这说一下.</p>
-<h1 id="获取android-app"><a href="#获取android-app" class="headerlink" title="获取android_app"></a>获取android_app</h1><h2 id="基址偏移法"><a href="#基址偏移法" class="headerlink" title="基址偏移法"></a>基址偏移法</h2><p>首先,需要找到libUE4.so的android_main函数.<br><img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png" alt="android_main"><br>ida进入android_main函数后按F5,<br><img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/ida_f5.png" alt="ida_f5"><br>可以发现有一个全局变量保存了这个android_app变量.<br>那么它的地址就是</p>
+        <p>前几天看到评论区有个小伙伴问我，ue4 游戏怎么寻找 android_app 和获取系统输入.<br>
+ 我在这说一下.</p>
+<h1 id="获取android_app"><a class="markdownIt-Anchor" href="#获取android_app"></a> 获取 android_app</h1>
+<h2 id="基址偏移法"><a class="markdownIt-Anchor" href="#基址偏移法"></a> 基址偏移法</h2>
+<p>首先，需要找到 libUE4.so 的 android_main 函数.<br>
+<img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/android_main.png" alt="android_main"><br>
+ida 进入 android_main 函数后按 F5,<br>
+<img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/ida_f5.png" alt="ida_f5"><br>
+ 可以发现有一个全局变量保存了这个 android_app 变量.<br>
+ 那么它的地址就是</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">libUE4.so(基址)+A36E1D0</span><br></pre></td></tr></table></figure>
-
-<h2 id="注入Hook法-Magisk注入app并嵌入imgui"><a href="#注入Hook法-Magisk注入app并嵌入imgui" class="headerlink" title="注入Hook法 (Magisk注入app并嵌入imgui)"></a>注入Hook法 (Magisk注入app并嵌入imgui)</h2><p>参考了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192">Unity全自动hook的实现</a><br>hook_each等代码可以在这里找到:<br><a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
-<p>直接Hook libUE4.so的android_main函数拿到android_app变量.<br>1.Hook dl_open.</p>
+<h2 id="注入hook法-magisk注入app并嵌入imgui"><a class="markdownIt-Anchor" href="#注入hook法-magisk注入app并嵌入imgui"></a> 注入 Hook 法 (Magisk 注入 app 并嵌入 imgui)</h2>
+<p>参考了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a><br>
+ hook_each 等代码可以在这里找到:<br>
+<a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
+<p>直接 Hook libUE4.so 的 android_main 函数拿到 android_app 变量.<br>
+1.Hook dl_open.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">void</span> *loader_dlopen = <span class="built_in">DobbySymbolResolver</span>(<span class="literal">nullptr</span>, <span class="string">&quot;__dl__Z9do_dlopenPKciPK17android_dlextinfoPKv&quot;</span>);</span><br><span class="line"><span class="built_in">hook_each</span>((<span class="type">unsigned</span> <span class="type">long</span>)loader_dlopen, (<span class="type">void</span> *)dlopen_, (<span class="type">void</span> **)&amp;dlopen_backup);</span><br></pre></td></tr></table></figure>
-<p>2.在dl_open里拿到libUE4.so句柄并调用dlsym拿到android_main函数地址,然后Hook android_main.</p>
+<p>2. 在 dl_open 里拿到 libUE4.so 句柄并调用 dlsym 拿到 android_main 函数地址，然后 Hook android_main.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (<span class="built_in">strstr</span>(name, <span class="string">&quot;libUE4.so&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        ue4_handle = handle;</span><br><span class="line">        <span class="built_in">LOGI</span>(<span class="string">&quot;Got libUE4.so handle at %lx&quot;</span>, (<span class="type">long</span>)ue4_handle);</span><br><span class="line">        <span class="built_in">hook_each</span>((<span class="type">unsigned</span> <span class="type">long</span>)<span class="built_in">dlsym</span>(ue4_handle, <span class="string">&quot;android_main&quot;</span>), (<span class="type">void</span> *)new_android_main, (<span class="type">void</span> **)&amp;ori_android_main);</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-<p>3.在Hook后的android_main里保存android_app.</p>
+<p>3. 在 Hook 后的 android_main 里保存 android_app.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">new_android_main</span><span class="params">(<span class="keyword">struct</span> android_app *app)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// LOGD(&quot;new_android_main&quot;);</span></span><br><span class="line">    g_App = app; <span class="comment">//这个g_App是一个全局变量,保存android_app.</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == ori_android_main)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;failed to get original android_main&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ori_android_main</span>(app);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h1 id="获取输入"><a href="#获取输入" class="headerlink" title="获取输入"></a>获取输入</h1><p>先将原android_app的onInputEvent保存,然后替换为自己的onInputEvent.</p>
+<h1 id="获取输入"><a class="markdownIt-Anchor" href="#获取输入"></a> 获取输入</h1>
+<p>先将原 android_app 的 onInputEvent 保存，然后替换为自己的 onInputEvent.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ori_onInputEvent = <span class="keyword">decltype</span>(ori_onInputEvent)(g_App-&gt;onInputEvent);</span><br><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;ori_onInputEvent:%llx&quot;</span>, (<span class="type">long</span> <span class="type">long</span>)ori_onInputEvent);</span><br><span class="line">g_App-&gt;onInputEvent = onInputEvent;</span><br></pre></td></tr></table></figure>
-<p>然后自己的onInputEvent就可以打印输入事件了.</p>
+<p>然后自己的 onInputEvent 就可以打印输入事件了.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int32_t</span> <span class="title">onInputEvent</span><span class="params">(<span class="keyword">struct</span> android_app *app, AInputEvent *inputEvent)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;onInputEvent&quot;</span>);</span><br><span class="line">    <span class="type">int32_t</span> event_action = <span class="built_in">AMotionEvent_getAction</span>(inputEvent);</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;event_action:%d&quot;</span>, event_action);</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ori_onInputEvent</span>(app, inputEvent);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p><img src="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/log.png" alt="log"></p>
 
     </div>
@@ -326,7 +337,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96android-app"><span class="nav-number">1.</span> <span class="nav-text">获取android_app</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E5%9D%80%E5%81%8F%E7%A7%BB%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text">基址偏移法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E5%85%A5Hook%E6%B3%95-Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui"><span class="nav-number">1.2.</span> <span class="nav-text">注入Hook法 (Magisk注入app并嵌入imgui)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E8%BE%93%E5%85%A5"><span class="nav-number">2.</span> <span class="nav-text">获取输入</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96android_app"><span class="nav-number">1.</span> <span class="nav-text"> 获取 android_app</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E5%9D%80%E5%81%8F%E7%A7%BB%E6%B3%95"><span class="nav-number">1.1.</span> <span class="nav-text"> 基址偏移法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E5%85%A5hook%E6%B3%95-magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui"><span class="nav-number">1.2.</span> <span class="nav-text"> 注入 Hook 法 (Magisk 注入 app 并嵌入 imgui)</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E8%BE%93%E5%85%A5"><span class="nav-number">2.</span> <span class="nav-text"> 获取输入</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
