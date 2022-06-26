@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="在之前的一篇文章 Android 外部 imgui 绘制 (二)–补充 提到了 Unity 全自动 hook 的实现。那么就来实战一下.  游戏: 神庙逃亡 2  工具 1.Il2CppDumper 2.ida7.5 3.ndk 等编译环境  过程  Il2CppDumper 解压出 dump.cs 等函数信息 下载 Il2CppDumper  把 apk 里的 global-metadata.d">
+  <meta name="description" content="在之前的一篇文章Android外部imgui绘制(二)–补充 提到了Unity全自动hook的实现.那么就来实战一下.游戏:神庙逃亡2 工具1.Il2CppDumper2.ida7.53.ndk等编译环境 过程Il2CppDumper解压出dump.cs等函数信息下载Il2CppDumper把apk里的global-metadata.dat,和libil2cpp.so提取出来. 1\assets\">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Magisk注入Unity全自动Hook实战--神庙逃亡2">
 <meta property="og:url" content="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="在之前的一篇文章 Android 外部 imgui 绘制 (二)–补充 提到了 Unity 全自动 hook 的实现。那么就来实战一下.  游戏: 神庙逃亡 2  工具 1.Il2CppDumper 2.ida7.5 3.ndk 等编译环境  过程  Il2CppDumper 解压出 dump.cs 等函数信息 下载 Il2CppDumper  把 apk 里的 global-metadata.d">
+<meta property="og:description" content="在之前的一篇文章Android外部imgui绘制(二)–补充 提到了Unity全自动hook的实现.那么就来实战一下.游戏:神庙逃亡2 工具1.Il2CppDumper2.ida7.53.ndk等编译环境 过程Il2CppDumper解压出dump.cs等函数信息下载Il2CppDumper把apk里的global-metadata.dat,和libil2cpp.so提取出来. 1\assets\">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/out.png">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/ida0.png">
@@ -213,53 +213,35 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>在之前的一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/"> Android 外部 imgui 绘制 (二)–补充<br>
-</a>提到了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a>。那么就来实战一下.<br>
- 游戏:<a target="_blank" rel="noopener" href="https://tp2.uu.cc/"> 神庙逃亡 2</a></p>
-<h2 id="工具"><a class="markdownIt-Anchor" href="#工具"></a> 工具</h2>
-<p>1.<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper">Il2CppDumper</a><br>
-2.ida7.5<br>
-3.ndk 等编译环境</p>
-<h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
-<h3 id="il2cppdumper解压出dumpcs等函数信息"><a class="markdownIt-Anchor" href="#il2cppdumper解压出dumpcs等函数信息"></a> Il2CppDumper 解压出 dump.cs 等函数信息</h3>
-<p>下载<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper/releases/"> Il2CppDumper</a><br>
- 把 apk 里的 global-metadata.dat, 和 libil2cpp.so 提取出来.</p>
+        <p>在之前的一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/">Android外部imgui绘制(二)–补充
+</a>提到了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192">Unity全自动hook的实现</a>.那么就来实战一下.<br>游戏:<a target="_blank" rel="noopener" href="https://tp2.uu.cc/">神庙逃亡2</a></p>
+<h2 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h2><p>1.<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper">Il2CppDumper</a><br>2.ida7.5<br>3.ndk等编译环境</p>
+<h2 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h2><h3 id="Il2CppDumper解压出dump-cs等函数信息"><a href="#Il2CppDumper解压出dump-cs等函数信息" class="headerlink" title="Il2CppDumper解压出dump.cs等函数信息"></a>Il2CppDumper解压出dump.cs等函数信息</h3><p>下载<a target="_blank" rel="noopener" href="https://github.com/Perfare/Il2CppDumper/releases/">Il2CppDumper</a><br>把apk里的global-metadata.dat,和libil2cpp.so提取出来.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\assets\bin\Data\Managed\Metadata\global-metadata.dat</span><br></pre></td></tr></table></figure>
+
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">\lib\armeabi-v7a\libil2cpp.so</span><br></pre></td></tr></table></figure>
-<p>新建文件夹 out, 命令行执行</p>
+<p>新建文件夹out,命令行执行</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Il2CppDumper.exe libil2cpp.so global-metadata.dat out</span><br></pre></td></tr></table></figure>
-<p>之后解压后的头文件会在 out 文件夹里.<br>
-<img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/out.png" alt="out"></p>
-<h3 id="dumpcs里搜索关键点"><a class="markdownIt-Anchor" href="#dumpcs里搜索关键点"></a> dump.cs 里搜索关键点</h3>
-<p>打开 dump.cs, 搜索 kill. 顺便一提，对于没有加密的 u3 的游戏来说，关键点基本上就是 money,coin,kill,death,start 等。我的目标是实现人物无敌，所以才选择 kill.</p>
+<p>之后解压后的头文件会在out文件夹里.<br><img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/out.png" alt="out"></p>
+<h3 id="dump-cs里搜索关键点"><a href="#dump-cs里搜索关键点" class="headerlink" title="dump.cs里搜索关键点"></a>dump.cs里搜索关键点</h3><p>打开dump.cs,搜索kill.顺便一提,对于没有加密的u3的游戏来说,关键点基本上就是money,coin,kill,death,start等.我的目标是实现人物无敌,所以才选择kill.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// RVA: 0x7A7FE0 Offset: 0x7A7FE0 VA: 0x7A7FE0</span><br><span class="line">public void Kill(DeathTypes deathType, float shakeCamMagnitude = 0, bool killBySelf = False) &#123; &#125;</span><br></pre></td></tr></table></figure>
-<p>得到它的 RVA 是<strong> 0x7A7FE0</strong>.</p>
-<h3 id="ida分析"><a class="markdownIt-Anchor" href="#ida分析"></a> ida 分析</h3>
-<p>ida 打开  <code>libil2cpp.so</code> <br>
-Alt+F7 执行脚本 ida_py3.py (这个脚本在 Il2CppDumper 里), 选择 out 文件夹里的 script.json, 导入所有函数符号到 ida.<br>
- 跳转到地址 0x7A7FE0, 在函数头按 X 查看其交叉引用.<br>
-<img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/ida0.png" alt="ida0"><br>
-<img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/jcyy.png" alt="jcyy"><br>
- 点击，因为 Stumble 有绊倒的意思。分析它大概是一个判断人物失误的函数.</p>
+<p>得到它的RVA是<strong>0x7A7FE0</strong>.</p>
+<h3 id="ida分析"><a href="#ida分析" class="headerlink" title="ida分析"></a>ida分析</h3><p>ida打开 <code>libil2cpp.so</code><br>Alt+F7执行脚本ida_py3.py(这个脚本在Il2CppDumper里),选择out文件夹里的script.json,导入所有函数符号到ida.<br>跳转到地址0x7A7FE0,在函数头按X查看其交叉引用.<br><img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/ida0.png" alt="ida0"><br><img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/jcyy.png" alt="jcyy"><br>点击,因为Stumble有绊倒的意思.分析它大概是一个判断人物失误的函数.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TRRunnerPawn$$Stumble+1548</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/ida.png" alt="ida"><br>
- 唉，看到 Invincible 了，英语不好的我查了下</p>
+<p><img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/ida.png" alt="ida"><br>唉,看到 Invincible 了,英语不好的我查了下</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Invincible 无敌的; 不可战胜的; 不能改变的;</span><br></pre></td></tr></table></figure>
-<p>好家伙，这不就是我们要的判断无敌的函数吗？</p>
+<p>好家伙,这不就是我们要的判断无敌的函数吗?</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">TRRunnerPawn__IsInvincible(a1)</span><br></pre></td></tr></table></figure>
 <p>干就完事了.</p>
-<h3 id="自动hook"><a class="markdownIt-Anchor" href="#自动hook"></a> 自动 Hook</h3>
-<p>dump.cs 搜索 IsInvincible</p>
+<h3 id="自动Hook"><a href="#自动Hook" class="headerlink" title="自动Hook"></a>自动Hook</h3><p>dump.cs搜索 IsInvincible</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">// RVA: 0x795050 Offset: 0x795050 VA: 0x795050</span><br><span class="line">public bool IsInvincible() &#123; &#125;</span><br></pre></td></tr></table></figure>
-<p>拿到地址后可以去 ida 修改硬编码，直接返回 true. 但是这样不够自动化。万一版本更新偏移变了咋办？</p>
-<p>还记得一开头的<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a>吗？<br>
-<a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
-<p>我们就来全自动 hook 一次.-_-</p>
-<p>大佬已经帮我们写好框架了。只需要填就行.</p>
+<p>拿到地址后可以去ida修改硬编码,直接返回true.但是这样不够自动化.万一版本更新偏移变了咋办?</p>
+<p>还记得一开头的<a target="_blank" rel="noopener" href="https://0x.mk/?p=192">Unity全自动hook的实现</a>吗?<br><a target="_blank" rel="noopener" href="https://github.com/kotori2/riru_unity_example">https://github.com/kotori2/riru_unity_example</a>.</p>
+<p>我们就来全自动hook一次.-_-</p>
+<p>大佬已经帮我们写好框架了.只需要填就行.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Il2CppClass* clazz = <span class="built_in">il2cpp_class_from_name</span>(image, <span class="string">&quot;&quot;</span>, <span class="string">&quot;TRRunnerPawn&quot;</span>);</span><br><span class="line"><span class="built_in">hook_each</span>((<span class="type">unsigned</span> <span class="type">long</span>)<span class="built_in">il2cpp_class_get_method_from_name</span>(clazz, <span class="string">&quot;IsInvincible&quot;</span>, <span class="number">0</span>)-&gt;methodPointer, (<span class="type">void</span> *)hook_invincible, (<span class="type">void</span> **)&amp;backup_invincible);</span><br></pre></td></tr></table></figure>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">hook_invincible</span><span class="params">(<span class="type">int</span> a1)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (backup_invincible == <span class="literal">nullptr</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGE</span>(<span class="string">&quot;backup DOES NOT EXIST&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// LOGD(&quot;hook&quot;);</span></span><br><span class="line">    <span class="type">int</span> r = <span class="built_in">backup_invincible</span>(a1);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>注意<br>
-<strong> il2cpp_class_get_method_from_name 的第 3 个参数是该方法的参数个数 (dump.cs 里看到的参数个数，不是 ida), 填错就直接闪退.</strong></p>
+<p>注意<br><strong>il2cpp_class_get_method_from_name的第3个参数是该方法的参数个数(dump.cs里看到的参数个数,不是ida),填错就直接闪退.</strong></p>
 <p><img src="https://pshocker.github.io/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/smtw.gif" alt="smtw"></p>
 
     </div>
@@ -359,7 +341,7 @@ Alt+F7 执行脚本 ida_py3.py (这个脚本在 Il2CppDumper 里), 选择 out �
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text"> 工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text"> 过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#il2cppdumper%E8%A7%A3%E5%8E%8B%E5%87%BAdumpcs%E7%AD%89%E5%87%BD%E6%95%B0%E4%BF%A1%E6%81%AF"><span class="nav-number">2.1.</span> <span class="nav-text"> Il2CppDumper 解压出 dump.cs 等函数信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dumpcs%E9%87%8C%E6%90%9C%E7%B4%A2%E5%85%B3%E9%94%AE%E7%82%B9"><span class="nav-number">2.2.</span> <span class="nav-text"> dump.cs 里搜索关键点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ida%E5%88%86%E6%9E%90"><span class="nav-number">2.3.</span> <span class="nav-text"> ida 分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8hook"><span class="nav-number">2.4.</span> <span class="nav-text"> 自动 Hook</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text">工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Il2CppDumper%E8%A7%A3%E5%8E%8B%E5%87%BAdump-cs%E7%AD%89%E5%87%BD%E6%95%B0%E4%BF%A1%E6%81%AF"><span class="nav-number">2.1.</span> <span class="nav-text">Il2CppDumper解压出dump.cs等函数信息</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dump-cs%E9%87%8C%E6%90%9C%E7%B4%A2%E5%85%B3%E9%94%AE%E7%82%B9"><span class="nav-number">2.2.</span> <span class="nav-text">dump.cs里搜索关键点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ida%E5%88%86%E6%9E%90"><span class="nav-number">2.3.</span> <span class="nav-text">ida分析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E5%8A%A8Hook"><span class="nav-number">2.4.</span> <span class="nav-text">自动Hook</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
