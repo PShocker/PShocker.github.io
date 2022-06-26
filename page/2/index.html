@@ -151,6 +151,90 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-inotify/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-inotify/" class="post-title-link" itemprop="url">Android内存读写检测--inotify</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-05-08 16:55:22" itemprop="dateCreated datePublished" datetime="2022-05-08T16:55:22+08:00">2022-05-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-06-10 13:54:19" itemprop="dateModified" datetime="2022-06-10T13:54:19+08:00">2022-06-10</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>关于安卓的内存读写检测，网上少之又少，我仅仅找到两篇我觉得比较可靠的.</p>
+<p><a target="_blank" rel="noopener" href="http://t.csdn.cn/F417j">关于某蛇内核项目原理</a><br>
+<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38944721/article/details/119471016">安卓手游安全 - 反外挂基础</a></p>
+<p>特此记录一下.</p>
+<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
+<p>app 里使用 inotify 机制监控对内存的读写操作，引用百度百科的一句话.</p>
+<p><strong>Inotify 是一个 Linux 内核特性，它监控文件系统，并且及时向专门的应用程序发出相关的事件警告，比如删除、读、写和卸载操作等。您还可以跟踪活动的源头和目标等细节。</strong></p>
+<h2 id="使用"><a class="markdownIt-Anchor" href="#使用"></a> 使用</h2>
+<p>1. 新建一个监控线程.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">pthread_t</span> ptMem, t, ptPageMap;</span><br><span class="line"><span class="type">int</span> iRet = <span class="number">0</span>;</span><br><span class="line">iRet = <span class="built_in">pthread_create</span>(&amp;ptPageMap, <span class="literal">NULL</span>, thread_watchInotifyDump, <span class="literal">NULL</span>);</span><br></pre></td></tr></table></figure>
+<p>2. 初始化监控</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> dirName[NAME_MAX] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"><span class="comment">//snprintf(dirName, NAME_MAX, &quot;/proc/%d&quot;, getpid());</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//用于监控/proc/pid/mem的数据</span></span><br><span class="line"><span class="built_in">snprintf</span>(dirName, NAME_MAX, <span class="string">&quot;/proc/%d/mem&quot;</span>, <span class="built_in">getpid</span>());</span><br><span class="line"></span><br><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;监控位置 : %s\n&quot;</span>, dirName);</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> fd = <span class="built_in">inotify_init</span>();</span><br><span class="line"><span class="keyword">if</span> (fd &lt; <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">LOGE</span>(<span class="string">&quot;inotify_init err.\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> wd = <span class="built_in">inotify_add_watch</span>(fd, dirName, IN_ALL_EVENTS);</span><br><span class="line"><span class="keyword">if</span> (wd &lt; <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGE</span>(<span class="string">&quot;inotify_add_watch err.\n&quot;</span>);</span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>3.select 读取监控消息</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> buflen = <span class="built_in">sizeof</span>(<span class="keyword">struct</span> inotify_event) * <span class="number">0x100</span>;</span><br><span class="line"><span class="type">char</span> buf[buflen] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line">fd_set readfds;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> count[<span class="number">5</span>] = &#123;<span class="number">0</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">FD_ZERO</span>(&amp;readfds);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">FD_SET</span>(fd, &amp;readfds);</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> iRet = <span class="built_in">select</span>(fd + <span class="number">1</span>, &amp;readfds, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>); <span class="comment">// 此处阻塞</span></span><br><span class="line"></span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;iRet的返回值:%d\n&quot;</span>, iRet);</span><br><span class="line">    <span class="keyword">if</span> (<span class="number">-1</span> == iRet)</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (iRet)</span><br><span class="line">    &#123;</span><br><span class="line"></span><br><span class="line">        <span class="built_in">memset</span>(buf, <span class="number">0</span>, buflen);</span><br><span class="line">        <span class="type">int</span> len = <span class="built_in">read</span>(fd, buf, buflen);</span><br><span class="line"></span><br><span class="line">        <span class="type">int</span> i = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">while</span> (i &lt; len)</span><br><span class="line">        &#123;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">struct</span> <span class="title class_">inotify_event</span> *event = (<span class="keyword">struct</span> inotify_event *)&amp;buf[i];</span><br><span class="line"></span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;event mask:%d\n&quot;</span>, event-&gt;mask);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> ((event-&gt;mask &amp; IN_ACCESS))</span><br><span class="line">            &#123;</span><br><span class="line"></span><br><span class="line">                ++count[<span class="number">0</span>];</span><br><span class="line">                <span class="built_in">LOGD</span>(<span class="string">&quot;1.IN_ACCESS,第%d次.\n\n&quot;</span>, count[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">                <span class="comment">//__asm __volatile(&quot;.int 0x8c89fa98&quot;);</span></span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> ((event-&gt;mask &amp; IN_OPEN))</span><br><span class="line">            &#123;</span><br><span class="line">                ++count[<span class="number">1</span>];</span><br><span class="line">                <span class="built_in">LOGD</span>(<span class="string">&quot;2.IN_OPEN,第%d次.\n\n&quot;</span>,  count[<span class="number">1</span>]);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> ((event-&gt;mask &amp; IN_CLOSE))</span><br><span class="line">            &#123;</span><br><span class="line">                ++count[<span class="number">2</span>];</span><br><span class="line">                <span class="built_in">LOGD</span>(<span class="string">&quot;3.IN_CLOSE,第%d次.\n\n&quot;</span>, count[<span class="number">2</span>]);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            i += <span class="built_in">sizeof</span>(<span class="keyword">struct</span> inotify_event) + event-&gt;len;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="效果"><a class="markdownIt-Anchor" href="#效果"></a> 效果</h2>
+<p>当用 ceserver 读取内存时，发现会被检测到，GG 和 vm_read 我懒得测了，理论上是有效果的.<br>
+<img src="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-inotify/1.png" alt></p>
+<p>本文所用示例代码来自:<br>
+<a target="_blank" rel="noopener" href="https://github.com/Reverse-Kindergarten/Android_Anti-Hcak_Inotify">https://github.com/Reverse-Kindergarten/Android_Anti-Hcak_Inotify</a></p>
+<p><strong>谢谢 isBaibai 和 SsageParuders 两位大佬</strong></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/04/%E7%94%A8ollvm%E6%B7%B7%E6%B7%86native%E4%BB%A3%E7%A0%81/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1044,98 +1128,6 @@ Alt+F7 执行脚本 ida_py3.py (这个脚本在 Il2CppDumper 里), 选择 out �
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/" class="post-title-link" itemprop="url">Android Hook native层获取系统输入</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-04-02 21:51:03" itemprop="dateCreated datePublished" datetime="2022-04-02T21:51:03+08:00">2022-04-02</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-10 14:21:15" itemprop="dateModified" datetime="2022-06-10T14:21:15+08:00">2022-06-10</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在上一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/"> Android 外部 imgui 绘制 (二)–补充</a>补充说明了 ue4 游戏下触摸输入的获取方法。本篇介绍一种更为通用的获取系统输入的方法.</p>
-<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
-<p>在 Android 系统中获取系统输入的原理是读取 &quot;/dev/input/event&quot; 下的文件，监听是否有系统输入。然后将不同的输入进行加工，然后分发.<br>
- 在安卓系统中输入事件被分成了</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">KeyEvent(键盘输入)</span><br><span class="line">MotionEvent(触摸输入)</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
-<p>参考<br>
-<a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/frameworks/native/libs/input/Input.cpp"> /frameworks/native/libs/input/Input.cpp</a></p>
-<p>每一种 Event 在分发之前都会经过初始化的流程，以触摸事件为例</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1345</span>  <span class="function"><span class="type">void</span> <span class="title">InputConsumer::initializeMotionEvent</span><span class="params">(MotionEvent* event, <span class="type">const</span> InputMessage* msg)</span> </span>&#123;</span><br><span class="line"><span class="number">1346</span>      <span class="type">uint32_t</span> pointerCount = msg-&gt;body.motion.pointerCount;</span><br><span class="line"><span class="number">1347</span>      PointerProperties pointerProperties[pointerCount];</span><br><span class="line"><span class="number">1348</span>      PointerCoords pointerCoords[pointerCount];</span><br><span class="line"><span class="number">1349</span>      <span class="keyword">for</span> (<span class="type">uint32_t</span> i = <span class="number">0</span>; i &lt; pointerCount; i++) &#123;</span><br><span class="line"><span class="number">1350</span>          pointerProperties[i].<span class="built_in">copyFrom</span>(msg-&gt;body.motion.pointers[i].properties);</span><br><span class="line"><span class="number">1351</span>          pointerCoords[i].<span class="built_in">copyFrom</span>(msg-&gt;body.motion.pointers[i].coords);</span><br><span class="line"><span class="number">1352</span>      &#125;</span><br><span class="line"><span class="number">1353</span>  </span><br><span class="line"><span class="number">1354</span>      ui::Transform transform;</span><br><span class="line"><span class="number">1355</span>      transform.<span class="built_in">set</span>(&#123;msg-&gt;body.motion.dsdx, msg-&gt;body.motion.dtdx, msg-&gt;body.motion.tx,</span><br><span class="line"><span class="number">1356</span>                     msg-&gt;body.motion.dtdy, msg-&gt;body.motion.dsdy, msg-&gt;body.motion.ty, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>&#125;);</span><br><span class="line"><span class="number">1357</span>      event-&gt;<span class="built_in">initialize</span>(msg-&gt;body.motion.eventId, msg-&gt;body.motion.deviceId, msg-&gt;body.motion.source,</span><br><span class="line"><span class="number">1358</span>                        msg-&gt;body.motion.displayId, msg-&gt;body.motion.hmac, msg-&gt;body.motion.action,</span><br><span class="line"><span class="number">1359</span>                        msg-&gt;body.motion.actionButton, msg-&gt;body.motion.flags,</span><br><span class="line"><span class="number">1360</span>                        msg-&gt;body.motion.edgeFlags, msg-&gt;body.motion.metaState,</span><br><span class="line"><span class="number">1361</span>                        msg-&gt;body.motion.buttonState, msg-&gt;body.motion.classification, transform,</span><br><span class="line"><span class="number">1362</span>                        msg-&gt;body.motion.xPrecision, msg-&gt;body.motion.yPrecision,</span><br><span class="line"><span class="number">1363</span>                        msg-&gt;body.motion.xCursorPosition, msg-&gt;body.motion.yCursorPosition,</span><br><span class="line"><span class="number">1364</span>                        msg-&gt;body.motion.displayWidth, msg-&gt;body.motion.displayHeight,</span><br><span class="line"><span class="number">1365</span>                        msg-&gt;body.motion.downTime, msg-&gt;body.motion.eventTime, pointerCount,</span><br><span class="line"><span class="number">1366</span>                        pointerProperties, pointerCoords);</span><br><span class="line"><span class="number">1367</span>  &#125;</span><br></pre></td></tr></table></figure>
-<p>注意到，event-&gt;initialize 就是初始化一个 MotionEvent.<br>
-<strong> 而这个函数 (InputConsumer::initializeMotionEvent) 就是需要 Hook 的函数.</strong><br>
- 参考<br>
-<a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/frameworks/native/libs/input/InputTransport.cpp#initializeMotionEvent"> /frameworks/native/libs/input/InputTransport.cpp</a></p>
-<h2 id="过程"><a class="markdownIt-Anchor" href="#过程"></a> 过程</h2>
-<p>随便观察一个 app 进程的 maps, 过滤得到 libinput.so 的路径.</p>
-<p><img src="https://pshocker.github.io/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/libinput.png" alt="libinput"></p>
-<p>这个 libinput.so 就包含上面 InputConsumer::initializeMotionEvent 的代码.</p>
-<p>拉到电脑上，ida 打开.</p>
-<p><img src="https://pshocker.github.io/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/ida.png" alt="ida"><br>
- 得到它的导出函数符号是</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE</span><br></pre></td></tr></table></figure>
-<p>用 Dobby 进行 hook</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">hook_input</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">void</span> *sym_input = <span class="built_in">DobbySymbolResolver</span>(<span class="literal">NULL</span>, <span class="string">&quot;_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != sym_input)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE:%llx&quot;</span>, (<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span>)sym_input);</span><br><span class="line">        <span class="built_in">DobbyHook</span>(sym_input, (<span class="type">void</span> *)new_input, (<span class="type">void</span> **)&amp;ori_input);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在 new_input 就可以得到系统输入了.</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">new_input</span><span class="params">(<span class="type">void</span> *thiz, <span class="type">void</span> *a2, <span class="type">void</span> *a3)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> == ori_input)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;failed to get original input&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">ori_input</span>(thiz, a2, a3);</span><br><span class="line">    <span class="comment">// LOGD(&quot;new_input&quot;);</span></span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;action:%d&quot;</span>, <span class="built_in">AMotionEvent_getAction</span>((AInputEvent *)thiz));</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/log.png" alt="log"></p>
-<p><strong>如果出现崩溃等 bug, 请检查是否是 DobbySymbolResolver 的问题，请指定第一个参数为 libinput.so 的路径</strong><br>
-<strong>例如:</strong></p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">void *sym_input = DobbySymbolResolver(&quot;system/lib/libinput.so&quot;,&quot;_ZN7android13InputConsumer21initializeMotionEventEPNS_11MotionEventEPKNS_12InputMessageE&quot;);</span><br></pre></td></tr></table></figure>
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1207,7 +1199,7 @@ Alt+F7 执行脚本 ida_py3.py (这个脚本在 Il2CppDumper 里), 选择 out �
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">28</span>
+          <span class="site-state-item-count">29</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
