@@ -151,6 +151,87 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/" class="post-title-link" itemprop="url">Android-内联SVC指令</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-06-27 13:50:29 / 修改时间：14:09:58" itemprop="dateCreated datePublished" datetime="2022-06-27T13:50:29+08:00">2022-06-27</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>记录一个内联 SVC 指令的方法。需要 AOSP 环境.</p>
+<h2 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h2>
+<p>反各种基于 libc.so 的 Hook.</p>
+<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
+<p>把 libc 内联到可执行文件或 so 库。从而不调用系统 libc.so 库的函数</p>
+<h2 id="代码"><a class="markdownIt-Anchor" href="#代码"></a> 代码</h2>
+<p><code>main.cpp</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">20</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>Android.bp</code></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">cc_binary &#123;</span><br><span class="line">    name: &quot;testLibc&quot;,</span><br><span class="line">    srcs: [&quot;*.cpp&quot;],</span><br><span class="line"></span><br><span class="line">    cppflags: [</span><br><span class="line">        &quot;-Wno-error&quot;,</span><br><span class="line">        &quot;-Wno-sign-conversion&quot;,</span><br><span class="line">        &quot;-Wno-unused-parameter&quot;,</span><br><span class="line">        &quot;-Wno-sign-conversion&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">    static_executable: true,</span><br><span class="line">    </span><br><span class="line">    static_libs: [</span><br><span class="line">        &quot;libc&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="编译"><a class="markdownIt-Anchor" href="#编译"></a> 编译</h2>
+<p>略</p>
+<h2 id="效果"><a class="markdownIt-Anchor" href="#效果"></a> 效果</h2>
+<p>将编译后的文件用 ida 打开，观察其导入函数.<br>
+<img src="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/0.png" alt><br>
+ 发现是空的，说明 sleep 函数已经被内联.<br>
+ 丢到真机执行，<br>
+<img src="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/1.png" alt><br>
+20 秒后退出，也没啥问题.</p>
+<h2 id="最后"><a class="markdownIt-Anchor" href="#最后"></a> 最后</h2>
+<p>理论上可以把 AOSP 编译的 libc.a 提取出来当成静态库，用 ndk 链接，但我试了好久报 <code>Segmentation fault</code>  错，-_-. 希望有个大佬能解决.</p>
+<p>测试用例:<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/PShocker.github.io/releases/download/testLibc/testLibc">https://github.com/PShocker/PShocker.github.io/releases/download/testLibc/testLibc</a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/06/26/Android-%E9%9A%8F%E6%9C%BA%E5%8C%85%E5%90%8D/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -896,90 +977,6 @@ Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/" class="post-title-link" itemprop="url">Android内存读写检测--mincore</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-05-08 23:57:07" itemprop="dateCreated datePublished" datetime="2022-05-08T23:57:07+08:00">2022-05-08</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-10 14:21:14" itemprop="dateModified" datetime="2022-06-10T14:21:14+08:00">2022-06-10</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Android 另一种检测内存读写的方式–mincore</p>
-<p>参考了这篇文章<br>
-<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_38944721/article/details/119471016">安卓手游安全 - 反外挂基础</a></p>
-<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
-<p>引用上面文章的一句话</p>
-<p><strong>回归主题，上面所述有个关键词叫缺页异常比如我们调用 mmap 来映射内存，为了防止内存无效分配，该内存空间在未访问时是不会创建物理内存页的。当程序需要使用这块内存区域时，会触发缺页中断，然后系统才会创建物理内存页。</strong></p>
-<p>简而言之，就是先用 mmap 申请一段内存，如果 ce, 或 GG 读取这段内存后，那么这段内存就会由缺页变成非缺页.<br>
- 而内存的缺页与否可以通过调用 mincore 判断.</p>
-<h2 id="使用"><a class="markdownIt-Anchor" href="#使用"></a> 使用</h2>
-<p>1.mmap 申请内存</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">char</span> * memory= <span class="literal">nullptr</span>;</span><br><span class="line">memory= (<span class="type">char</span>*)<span class="built_in">mmap</span>(<span class="literal">nullptr</span>,<span class="number">0x4000</span>, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_ANONYMOUS | MAP_PRIVATE, <span class="number">0</span>, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>如果不对 memory 进行读写，那么 memory 默认为缺页状态</p>
-<p>2.mincore 判断</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> pageSize = <span class="built_in">getpagesize</span>();</span><br><span class="line"><span class="type">unsigned</span> <span class="type">char</span> vec = <span class="number">0</span>;</span><br><span class="line"><span class="comment">//memory[0]=1; 这个操作会把memory改为非缺页状态</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> addr= <span class="built_in">reinterpret_cast</span>&lt;<span class="type">unsigned</span> <span class="type">long</span>&gt;(memory);</span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> start = addr &amp; (~(pageSize - <span class="number">1</span>));</span><br><span class="line"><span class="built_in">mincore</span>((<span class="type">void</span> *)start, pageSize, &amp;vec);</span><br><span class="line"><span class="keyword">if</span> (vec == <span class="number">1</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;内存页：%p 存在于物理内存空间&quot;</span>,addr);</span><br><span class="line">&#125;<span class="keyword">else</span>&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;内存页：%p 不存在于物理内存空间&quot;</span>,addr);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="效果"><a class="markdownIt-Anchor" href="#效果"></a> 效果</h2>
-<p>当 ce 指定读取该内存时，会发现该内存已经处于非缺页状态.</p>
-<p>但是使用 ce 全局搜索内存时，并没有检测到这段内存.</p>
-<p><img src="https://pshocker.github.io/2022/05/08/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%A3%80%E6%B5%8B-mincore/1.png" alt></p>
-<p>本文所用代码:<br>
-<a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_Mincore">https://github.com/PShocker/Android_Mincore</a></p>
-
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1051,7 +1048,7 @@ Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">29</span>
+          <span class="site-state-item-count">30</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
