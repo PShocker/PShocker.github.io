@@ -176,7 +176,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-06-27 13:50:29 / 修改时间：14:09:58" itemprop="dateCreated datePublished" datetime="2022-06-27T13:50:29+08:00">2022-06-27</time>
+              <time title="创建时间：2022-06-27 13:50:29 / 修改时间：14:27:27" itemprop="dateCreated datePublished" datetime="2022-06-27T13:50:29+08:00">2022-06-27</time>
             </span>
 
           
@@ -192,9 +192,9 @@
       
           <p>记录一个内联 SVC 指令的方法。需要 AOSP 环境.</p>
 <h2 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h2>
-<p>反各种基于 libc.so 的 Hook.</p>
+<p>反抗各种基于 libc.so 的 Hook.</p>
 <h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
-<p>把 libc 内联到可执行文件或 so 库。从而不调用系统 libc.so 库的函数</p>
+<p>把 libc 以静态库的方式内联到可执行文件或 so 库。从而不调用系统 libc.so 库的函数</p>
 <h2 id="代码"><a class="markdownIt-Anchor" href="#代码"></a> 代码</h2>
 <p><code>main.cpp</code></p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">20</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
