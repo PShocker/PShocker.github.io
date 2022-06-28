@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="很早之前，我看到过一份珍贵无比的代码 开源一个 Linux 内核里进程内存管理模块源码 github 地址: https:&#x2F;&#x2F;github.com&#x2F;abcz316&#x2F;rwProcMem33 涉及到内核读写，硬件断点，很强势！ 直接开干就完事了. 我的编译环境:wsl (Ubuntu 18.04)  下载源代码，编译工具 参考: https:&#x2F;&#x2F;github.com&#x2F;MiCode&#x2F;Xiaomi_Ker">
+  <meta name="description" content="很早之前,我看到过一份珍贵无比的代码开源一个Linux内核里进程内存管理模块源码 github地址:https:&#x2F;&#x2F;github.com&#x2F;abcz316&#x2F;rwProcMem33 涉及到内核读写,硬件断点,很强势! 直接开干就完事了. 我的编译环境:wsl(Ubuntu 18.04) 下载源代码,编译工具参考:https:&#x2F;&#x2F;github.com&#x2F;MiCode&#x2F;Xiaomi_Kernel_OpenS">
 <meta property="og:type" content="article">
 <meta property="og:title" content="小米12(pro)内核模块编译--环境配置">
 <meta property="og:url" content="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="很早之前，我看到过一份珍贵无比的代码 开源一个 Linux 内核里进程内存管理模块源码 github 地址: https:&#x2F;&#x2F;github.com&#x2F;abcz316&#x2F;rwProcMem33 涉及到内核读写，硬件断点，很强势！ 直接开干就完事了. 我的编译环境:wsl (Ubuntu 18.04)  下载源代码，编译工具 参考: https:&#x2F;&#x2F;github.com&#x2F;MiCode&#x2F;Xiaomi_Ker">
+<meta property="og:description" content="很早之前,我看到过一份珍贵无比的代码开源一个Linux内核里进程内存管理模块源码 github地址:https:&#x2F;&#x2F;github.com&#x2F;abcz316&#x2F;rwProcMem33 涉及到内核读写,硬件断点,很强势! 直接开干就完事了. 我的编译环境:wsl(Ubuntu 18.04) 下载源代码,编译工具参考:https:&#x2F;&#x2F;github.com&#x2F;MiCode&#x2F;Xiaomi_Kernel_OpenS">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/res.png">
 <meta property="og:image" content="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/ko.png">
@@ -204,67 +204,59 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>很早之前，我看到过一份珍贵无比的代码<br>
-<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-259317.htm">开源一个 Linux 内核里进程内存管理模块源码</a></p>
-<p>github 地址:<br>
-<a target="_blank" rel="noopener" href="https://github.com/abcz316/rwProcMem33">https://github.com/abcz316/rwProcMem33</a></p>
-<p>涉及到<strong>内核读写，硬件断点</strong>，很强势！</p>
+        <p>很早之前,我看到过一份珍贵无比的代码<br><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-259317.htm">开源一个Linux内核里进程内存管理模块源码</a></p>
+<p>github地址:<br><a target="_blank" rel="noopener" href="https://github.com/abcz316/rwProcMem33">https://github.com/abcz316/rwProcMem33</a></p>
+<p>涉及到<strong>内核读写,硬件断点</strong>,很强势!</p>
 <p>直接开干就完事了.</p>
-<p>我的编译环境:wsl (Ubuntu 18.04)</p>
-<h2 id="下载源代码编译工具"><a class="markdownIt-Anchor" href="#下载源代码编译工具"></a> 下载源代码，编译工具</h2>
-<p>参考:<br>
-<a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957">https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957</a></p>
+<p>我的编译环境:wsl(Ubuntu 18.04)</p>
+<h2 id="下载源代码-编译工具"><a href="#下载源代码-编译工具" class="headerlink" title="下载源代码,编译工具"></a>下载源代码,编译工具</h2><p>参考:<br><a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957">https://github.com/MiCode/Xiaomi_Kernel_OpenSource/issues/957</a></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev unzip openjdk-8-jdk language-pack-zh-hans</span><br></pre></td></tr></table></figure>
-<p>下载小米 12 内核源码:</p>
+
+<p>下载小米12内核源码:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git clone --depth=1 https://github.com/MiCode/Xiaomi_Kernel_OpenSource -b zeus-s-oss</span><br></pre></td></tr></table></figure>
-<p>如果没有代理，不建议 git clone, 因为太慢了.</p>
-<p>打开这个网站:<br>
-<a target="_blank" rel="noopener" href="https://d.serctl.com/?dl_start">https://d.serctl.com/?dl_start</a></p>
-<p>下载内核的压缩包<br>
-<a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip"> https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip</a></p>
-<p>下载 clang 编译器:<br>
-<a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master">https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master</a><br>
- (魔法上网)</p>
+<p>如果没有代理,不建议git clone,因为太慢了.</p>
+<p>打开这个网站:<br><a target="_blank" rel="noopener" href="https://d.serctl.com/?dl_start">https://d.serctl.com/?dl_start</a></p>
+<p>下载内核的压缩包<br><a target="_blank" rel="noopener" href="https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip">https://github.com/MiCode/Xiaomi_Kernel_OpenSource/archive/refs/heads/zeus-s-oss.zip</a></p>
+<p>下载clang编译器:<br><a target="_blank" rel="noopener" href="https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master">https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+/master</a><br>(魔法上网)</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">export ARCH=arm64</span><br><span class="line">export SUBARCH=arm64</span><br><span class="line">export CROSS_COMPILE=/home/shocker/aosp12/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/bin/aarch64-linux-android-</span><br></pre></td></tr></table></figure>
-<p>CROSS_COMPILE 是我之前编译 aosp 的时候用的，源码里自带的.</p>
+
+<p>CROSS_COMPILE是我之前编译aosp的时候用的,源码里自带的.</p>
 <p>编译命令</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">make O=out CC=/home/shocker/clang/bin/clang CLANG_TRIPLE=aarch64-linux-android- generic_vm_defconfig</span><br><span class="line">make -j$(nproc) O=out CC=/home/shocker/clang/bin/clang  CLANG_TRIPLE=aarch64-linux-android- </span><br></pre></td></tr></table></figure>
-<h2 id="踩坑记录"><a class="markdownIt-Anchor" href="#踩坑记录"></a> 踩坑记录</h2>
-<p>重点来了，小米 12 的内核会缺很多文件，必须手动把每个错误都处理掉.</p>
-<h3 id="错误一"><a class="markdownIt-Anchor" href="#错误一"></a> 错误一</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">drivers/misc/Kconfig:540: can&#x27;t open file &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
-<p>打开 drivers/misc/Kconfig 删掉 540 行的</p>
+
+<h2 id="踩坑记录"><a href="#踩坑记录" class="headerlink" title="踩坑记录"></a>踩坑记录</h2><p>重点来了,小米12的内核会缺很多文件,必须手动把每个错误都处理掉.</p>
+<h3 id="错误一"><a href="#错误一" class="headerlink" title="错误一"></a>错误一</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">drivers/misc/Kconfig:540: can&#x27;t open file &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
+<p>打开drivers&#x2F;misc&#x2F;Kconfig删掉540行的</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">source &quot;drivers/misc/hwid/Kconfig&quot;</span><br></pre></td></tr></table></figure>
-<h3 id="错误二"><a class="markdownIt-Anchor" href="#错误二"></a> 错误二</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">../scripts/Makefile.build:44: ../drivers/misc/hwid/Makefile: No such file or directory</span><br><span class="line">make[4]: *** No rule to make target &#x27;../drivers/misc/hwid/Makefile&#x27;.  Stop.</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc/hwid&#x27; failed</span><br><span class="line">make[3]: *** [drivers/misc/hwid] Error 2</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc&#x27; failed</span><br><span class="line">make[2]: *** [drivers/misc] Error 2</span><br><span class="line">/home/shocker/kernel/Xiaomi_Kernel_OpenSource-zeus-s-oss/Makefile:1931: recipe for target &#x27;drivers&#x27; failed</span><br></pre></td></tr></table></figure>
-<p>修改./drivers/misc/Makefile</p>
+
+<h3 id="错误二"><a href="#错误二" class="headerlink" title="错误二"></a>错误二</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">../scripts/Makefile.build:44: ../drivers/misc/hwid/Makefile: No such file or directory</span><br><span class="line">make[4]: *** No rule to make target &#x27;../drivers/misc/hwid/Makefile&#x27;.  Stop.</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc/hwid&#x27; failed</span><br><span class="line">make[3]: *** [drivers/misc/hwid] Error 2</span><br><span class="line">../scripts/Makefile.build:520: recipe for target &#x27;drivers/misc&#x27; failed</span><br><span class="line">make[2]: *** [drivers/misc] Error 2</span><br><span class="line">/home/shocker/kernel/Xiaomi_Kernel_OpenSource-zeus-s-oss/Makefile:1931: recipe for target &#x27;drivers&#x27; failed</span><br></pre></td></tr></table></figure>
+<p>修改.&#x2F;drivers&#x2F;misc&#x2F;Makefile</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ./drivers/misc/Makefile</span><br></pre></td></tr></table></figure>
-<p>注释所有带 hwid 的行</p>
+<p>注释所有带hwid的行</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#ccflags-y += -I$(srctree)/drivers/misc/hwid/</span><br><span class="line">#obj-y                          += hwid/</span><br></pre></td></tr></table></figure>
-<h3 id="错误三"><a class="markdownIt-Anchor" href="#错误三"></a> 错误三</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_interface.h:11:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br><span class="line">         ^~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o] Error 1</span><br><span class="line">make[3]: *** Waiting for unfinished jobs....</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.c:13:10: fatal error: &#x27;mm/slab.h&#x27; file not found</span><br><span class="line">#include &lt;mm/slab.h&gt;</span><br><span class="line">         ^~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o] Error 1</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_util.c:15:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br></pre></td></tr></table></figure>
-<p>把./techpack/camera-kernel/ 删除</p>
+<h3 id="错误三"><a href="#错误三" class="headerlink" title="错误三"></a>错误三</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_interface.h:11:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br><span class="line">         ^~~~~~~~~~~~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_core.o] Error 1</span><br><span class="line">make[3]: *** Waiting for unfinished jobs....</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.c:13:10: fatal error: &#x27;mm/slab.h&#x27; file not found</span><br><span class="line">#include &lt;mm/slab.h&gt;</span><br><span class="line">         ^~~~~~~~~~~</span><br><span class="line">1 error generated.</span><br><span class="line">../scripts/Makefile.build:277: recipe for target &#x27;techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o&#x27; failed</span><br><span class="line">make[3]: *** [techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_dev.o] Error 1</span><br><span class="line">../techpack/camera-kernel/drivers/cam_req_mgr/cam_req_mgr_util.c:15:10: fatal error: &#x27;media/cam_req_mgr.h&#x27; file not found</span><br><span class="line">#include &lt;media/cam_req_mgr.h&gt;</span><br></pre></td></tr></table></figure>
+<p>把.&#x2F;techpack&#x2F;camera-kernel&#x2F;删除</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">rm -r techpack/camera-kernel/</span><br></pre></td></tr></table></figure>
-<h3 id="错误四"><a class="markdownIt-Anchor" href="#错误四"></a> 错误四</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">../drivers/android/vendor_hooks.c:42:10: fatal error: &#x27;trace/hooks/thermal.h&#x27; file not found</span><br><span class="line">#include &lt;trace/hooks/thermal.h&gt;</span><br></pre></td></tr></table></figure>
-<p>注释掉所有引用到 thermal.h 的地方</p>
+
+<h3 id="错误四"><a href="#错误四" class="headerlink" title="错误四"></a>错误四</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">../drivers/android/vendor_hooks.c:42:10: fatal error: &#x27;trace/hooks/thermal.h&#x27; file not found</span><br><span class="line">#include &lt;trace/hooks/thermal.h&gt;</span><br></pre></td></tr></table></figure>
+<p>注释掉所有引用到thermal.h的地方</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">vim ./drivers/android/vendor_hooks.c</span><br></pre></td></tr></table></figure>
+
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">//#include &lt;trace/hooks/thermal.h&gt;</span><br><span class="line">//EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_enable_thermal_genl_check);</span><br><span class="line">//EXPORT_TRACEPOINT_SYMBOL_GPL(android_vh_thermal_pm_notify_suspend);</span><br></pre></td></tr></table></figure>
-<p>然后就编译完成了<br>
-<img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/res.png" alt></p>
-<h2 id="编译模块"><a class="markdownIt-Anchor" href="#编译模块"></a> 编译模块</h2>
-<p>一个最简单的内核模块<br>
- hello.c</p>
+
+<p>然后就编译完成了<br><img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/res.png"></p>
+<h2 id="编译模块"><a href="#编译模块" class="headerlink" title="编译模块"></a>编译模块</h2><p>一个最简单的内核模块<br>hello.c</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;linux/init.h&gt;</span><br><span class="line">#include &lt;linux/module.h&gt;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">static int hello_init(void)</span><br><span class="line">&#123;</span><br><span class="line">    printk(KERN_WARNING&quot;Hello world!\n&quot;);</span><br><span class="line">    return 0;   </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static void hello_exit(void)</span><br><span class="line">&#123;</span><br><span class="line">    printk(KERN_WARNING&quot;hello exit!\n&quot;);    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">module_init(hello_init);</span><br><span class="line">module_exit(hello_exit);</span><br><span class="line">MODULE_LICENSE(&quot;GPL&quot;);</span><br></pre></td></tr></table></figure>
+
 <p>Makefile</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">obj-m := hello.o</span><br><span class="line">KDIR := /home/shocker/Xiaomi_Kernel_OpenSource-zeus-s-oss/out</span><br><span class="line">CFLAGS_MODULE=-fno-pic</span><br><span class="line">ARCH=arm64</span><br><span class="line"></span><br><span class="line">all:</span><br><span class="line">	make -C $(KDIR) M=$(PWD) modules </span><br><span class="line">clean:    </span><br><span class="line">	rm -f *.ko *.o *.mod.o *.mod.c *.symvers *.order</span><br></pre></td></tr></table></figure>
+
+
 <p>编译命令</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make -j$(nproc) CC=/home/shocker/clang/bin/clang  CLANG_TRIPLE=aarch64-linux-android-</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/ko.png" alt></p>
-<p>github 地址:<br>
-<a target="_blank" rel="noopener" href="https://github.com/PShocker/hellokernel">https://github.com/PShocker/hellokernel</a></p>
-<p>参考了泓清大佬的文章:<br>
-<a target="_blank" rel="noopener" href="https://blog.hongqing.online/android/BuildAndroidKernel/">【Android Kernel】编译总结</a></p>
+<p><img src="https://pshocker.github.io/2022/04/27/%E5%B0%8F%E7%B1%B312-pro-%E5%86%85%E6%A0%B8%E6%A8%A1%E5%9D%97%E7%BC%96%E8%AF%91-%E7%8E%AF%E5%A2%83%E9%85%8D%E7%BD%AE/ko.png"></p>
+<p>github地址:<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/hellokernel">https://github.com/PShocker/hellokernel</a></p>
+<p>参考了泓清大佬的文章:<br><a target="_blank" rel="noopener" href="https://blog.hongqing.online/android/BuildAndroidKernel/">【Android Kernel】编译总结</a></p>
 
     </div>
 
@@ -363,7 +355,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E6%BA%90%E4%BB%A3%E7%A0%81%E7%BC%96%E8%AF%91%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text"> 下载源代码，编译工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95"><span class="nav-number">2.</span> <span class="nav-text"> 踩坑记录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%B8%80"><span class="nav-number">2.1.</span> <span class="nav-text"> 错误一</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%BA%8C"><span class="nav-number">2.2.</span> <span class="nav-text"> 错误二</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%B8%89"><span class="nav-number">2.3.</span> <span class="nav-text"> 错误三</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%9B%9B"><span class="nav-number">2.4.</span> <span class="nav-text"> 错误四</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%A8%A1%E5%9D%97"><span class="nav-number">3.</span> <span class="nav-text"> 编译模块</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E6%BA%90%E4%BB%A3%E7%A0%81-%E7%BC%96%E8%AF%91%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text">下载源代码,编译工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95"><span class="nav-number">2.</span> <span class="nav-text">踩坑记录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%B8%80"><span class="nav-number">2.1.</span> <span class="nav-text">错误一</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%BA%8C"><span class="nav-number">2.2.</span> <span class="nav-text">错误二</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E4%B8%89"><span class="nav-number">2.3.</span> <span class="nav-text">错误三</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%9B%9B"><span class="nav-number">2.4.</span> <span class="nav-text">错误四</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E6%A8%A1%E5%9D%97"><span class="nav-number">3.</span> <span class="nav-text">编译模块</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
