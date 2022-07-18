@@ -176,7 +176,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:31:04" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
+              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:31:24" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
             </span>
 
           
@@ -191,30 +191,14 @@
 
       
           <p>对 Magisk 源码做一个简单的分析，本人很菜，分析不到位的地方请各位大神指出来。本文以 Magisk v25.1 为例</p>
-<h2 id="源码下载编译"><a class="markdownIt-Anchor" href="#源码下载编译"></a> 源码下载，编译</h2>
-<p>按照<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk"> Github</a> 所给出的步骤一步步来 (最好是挂代理):</p>
-<p>1. 以管理员的方式打开命令行窗口，输入 clone 命令<br>
- <code>git clone --recurse-submodules https://github.com/topjohnwu/Magisk.git</code> <br>
-2. 安装 python (版本高于 3.6), 配置环境变量，安装后输入命令<br>
- <code>pip install colorama</code> <br>
-3. 配置 Android Studio 的环境， <code>C:\Path\To\Android Studio\jre\bin</code>  和 ANDROID_SDK_ROOT, 例如 <code>C:\Users\Shocker\AppData\Local\Android\Sdk</code> <br>
-4. 在 Magisk 目录里命令行输入 <code>python ./build.py ndk</code>  下载 ndk<br>
-5. 下载 ndk 后，输入 <code>python ./build.py all</code>  就可以开始编译</p>
-<p>注：命令行窗口最好是以<strong>管理员</strong>的方式打开，不然会有 bug.</p>
-<h2 id="测试及调试"><a class="markdownIt-Anchor" href="#测试及调试"></a> 测试及调试</h2>
-<p>安装编译后的 magisk, 如图<br>
-<img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/0.jpg" alt></p>
-<h3 id="android-studio调试"><a class="markdownIt-Anchor" href="#android-studio调试"></a> Android Studio 调试</h3>
-<p>1. 点击 Android Studio 右上方的 Attach<br>
-<img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/2.png" alt><br>
-2. 选择 magisk 并附加<br>
-<img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/3.png" alt></p>
-<h3 id="查看magiskinit日志"><a class="markdownIt-Anchor" href="#查看magiskinit日志"></a> 查看 magiskinit 日志</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">su</span><br></pre></td></tr></table></figure>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmesg | grep magiskinit</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/1.png" alt></p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
