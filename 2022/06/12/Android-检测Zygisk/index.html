@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="在看 Zygisk 源码和调试的过程中发现了一种可以检测 Zygisk 的方法.">
+  <meta name="description" content="在看Zygisk源码和调试的过程中发现了一种可以检测Zygisk的方法.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android-检测Zygisk">
 <meta property="og:url" content="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="在看 Zygisk 源码和调试的过程中发现了一种可以检测 Zygisk 的方法.">
+<meta property="og:description" content="在看Zygisk源码和调试的过程中发现了一种可以检测Zygisk的方法.">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/0.png">
 <meta property="og:image" content="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/1.jpg">
@@ -210,22 +210,17 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>在看 Zygisk 源码和调试的过程中发现了一种可以检测 Zygisk 的方法.</p>
+        <p>在看Zygisk源码和调试的过程中发现了一种可以检测Zygisk的方法.</p>
 <span id="more"></span>
-<p>在我查看 app 的 maps 的时候，如果开启了 zygisk. 那么会在 maps 文件里出现 2 个 app_process, 一个是 magisk, 另一个是真正的 app_process</p>
-<p>如图<br>
-<img src="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/0.png" alt><br>
-红框的部分其实就是 magisk.</p>
-<p>可以参考:<br>
-<a target="_blank" rel="noopener" href="https://gist.github.com/5ec1cff/bfe06429f5bf1da262c40d0145e9f190#file-zygisk-md">Zygisk 源码分析</a></p>
-<p>所以直接检测这里，看看是不是有 2 个 app_process 就可以判断是否有 Zygisk.</p>
-<p>但有个问题，我在测试的时候发现，并不是所有时间都能检测到 2 个 app_process, 可能是 zygisk 做了处理.<br>
- 但是在 constructor 里检测是没有问题的.</p>
+<p>在我查看app的maps的时候,如果开启了zygisk.那么会在maps文件里出现2个app_process,一个是magisk,另一个是真正的app_process</p>
+<p>如图<br><img src="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/0.png"><br>红框的部分其实就是magisk.</p>
+<p>可以参考:<br><a target="_blank" rel="noopener" href="https://gist.github.com/5ec1cff/bfe06429f5bf1da262c40d0145e9f190#file-zygisk-md">Zygisk 源码分析</a></p>
+<p>所以直接检测这里,看看是不是有2个app_process就可以判断是否有Zygisk.</p>
+<p>但有个问题,我在测试的时候发现,并不是所有时间都能检测到2个app_process,可能是zygisk做了处理.<br>但是在constructor里检测是没有问题的.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> app_process64_num=<span class="number">0</span>; <span class="comment">//如果app_process64_num为2,说明有zygisk</span></span><br><span class="line"></span><br><span class="line">__unused __attribute__((constructor)) <span class="function"><span class="type">void</span> <span class="title">constructor_main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    set&lt;<span class="type">int</span>&gt; st;<span class="comment">//以app_process的大小为依据,放在set里</span></span><br><span class="line">    <span class="type">char</span> line[<span class="number">1024</span>];</span><br><span class="line">    <span class="type">char</span> path[PATH_MAX];</span><br><span class="line">    FILE* fp;</span><br><span class="line">    <span class="built_in">sprintf</span>(path,<span class="string">&quot;/proc/%d/maps&quot;</span>,<span class="built_in">getpid</span>());</span><br><span class="line">    fp = <span class="built_in">fopen</span>(path, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (fp) &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="built_in">fgets</span>(line, <span class="number">1024</span>, fp)) &#123;</span><br><span class="line">            <span class="type">char</span>* part[<span class="number">6</span>];</span><br><span class="line">            part[<span class="number">0</span>] = <span class="built_in">strtok</span>(line, <span class="string">&quot; &quot;</span>);</span><br><span class="line">            <span class="type">int</span> i=<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">while</span>(i&lt;<span class="number">6</span>) &#123;</span><br><span class="line">                part[i] = <span class="built_in">strtok</span>(<span class="literal">NULL</span>, <span class="string">&quot; &quot;</span>);</span><br><span class="line">                i++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">strcmp</span>(part[<span class="number">5</span>],<span class="string">&quot;/system/bin/app_process64\n&quot;</span>)==<span class="number">0</span>)&#123; <span class="comment">//app_process</span></span><br><span class="line"><span class="comment">//                 LOGD(&quot;大小:%s,地址:%s&quot;,part[4],part[0]);</span></span><br><span class="line">                <span class="type">int</span> res = <span class="built_in">atoi</span>(part[<span class="number">4</span>]);</span><br><span class="line">                st.<span class="built_in">insert</span>(res);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">fclose</span>(fp);</span><br><span class="line">    &#125;</span><br><span class="line">    app_process64_num=st.<span class="built_in">size</span>(); <span class="comment">//把检测结果给app_process64_num</span></span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="下载地址"><a class="markdownIt-Anchor" href="#下载地址"></a> 下载地址</h2>
-<p><a target="_blank" rel="noopener" href="https://github.com/PShocker/PShocker.github.io/releases/download/zygiskdetect/zygiskdetect.apk">https://github.com/PShocker/PShocker.github.io/releases/download/zygiskdetect/zygiskdetect.apk</a></p>
-<h2 id="效果如图"><a class="markdownIt-Anchor" href="#效果如图"></a> 效果如图</h2>
-<p><img src="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/1.jpg" alt></p>
+
+<h2 id="下载地址"><a href="#下载地址" class="headerlink" title="下载地址"></a>下载地址</h2><p><a target="_blank" rel="noopener" href="https://github.com/PShocker/PShocker.github.io/releases/download/zygiskdetect/zygiskdetect.apk">https://github.com/PShocker/PShocker.github.io/releases/download/zygiskdetect/zygiskdetect.apk</a></p>
+<h2 id="效果如图"><a href="#效果如图" class="headerlink" title="效果如图"></a>效果如图</h2><p><img src="https://pshocker.github.io/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/1.jpg"></p>
 
     </div>
 
@@ -324,7 +319,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E5%9C%B0%E5%9D%80"><span class="nav-number">1.</span> <span class="nav-text"> 下载地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E5%A6%82%E5%9B%BE"><span class="nav-number">2.</span> <span class="nav-text"> 效果如图</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8B%E8%BD%BD%E5%9C%B0%E5%9D%80"><span class="nav-number">1.</span> <span class="nav-text">下载地址</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C%E5%A6%82%E5%9B%BE"><span class="nav-number">2.</span> <span class="nav-text">效果如图</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
