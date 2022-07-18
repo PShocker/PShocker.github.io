@@ -151,6 +151,86 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.png">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/" class="post-title-link" itemprop="url">Magisk源码分析(一)</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:00:27" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>对 Magisk 源码做一个简单的分析，本人很菜，分析不到位的地方请各位大神指出来。本文以 Magisk v25.1 为例</p>
+<h2 id="源码下载编译"><a class="markdownIt-Anchor" href="#源码下载编译"></a> 源码下载，编译</h2>
+<p>按照<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk"> Github</a> 所给出的步骤一步步来 (最好是挂代理):</p>
+<p>1. 以管理员的方式打开命令行窗口，输出 clone 命令 <code>git clone --recurse-submodules https://github.com/topjohnwu/Magisk.git</code> <br>
+2. 安装 python (版本高于 3.6), 配置环境变量，安装后输入命令 <code>pip install colorama</code> <br>
+3. 配置 Android Studio 的环境， <code>C:\Path\To\Android Studio\jre\bin</code>  和 ANDROID_SDK_ROOT, 例如 <code>C:\Users\Shocker\AppData\Local\Android\Sdk</code> <br>
+4. 在 Magisk 目录里命令行输入 <code>python ./build.py ndk</code>  下载 ndk<br>
+5. 下载 ndk 后，输入 <code>python ./build.py all</code>  就可以开始编译</p>
+<p>注：命令行窗口最好是以<strong>管理员</strong>的方式打开，不然会有 bug.</p>
+<h2 id="测试及调试"><a class="markdownIt-Anchor" href="#测试及调试"></a> 测试及调试</h2>
+<p>安装编译后的 magisk, 如图<br>
+<a href="0.jpg"></a></p>
+<h3 id="android-studio调试"><a class="markdownIt-Anchor" href="#android-studio调试"></a> Android Studio 调试</h3>
+<p>1. 点击 Android Studio 右上方的 Attach<br>
+<a href="2.png"></a><br>
+2. 选择 magisk 并附加<br>
+<a href="3.png"></a></p>
+<h3 id="magiskinit"><a class="markdownIt-Anchor" href="#magiskinit"></a> magiskinit</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">su</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmesg | grep magiskinit</span><br></pre></td></tr></table></figure>
+<p><a href="1.png"></a></p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -805,83 +885,6 @@ Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/05/12/LIEF%E6%B3%A8%E5%85%A5%E5%92%8C%E4%BF%AE%E6%94%B9Android%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/test.png">
-      <meta itemprop="name" content="Shocker">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Shocker">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2022/05/12/LIEF%E6%B3%A8%E5%85%A5%E5%92%8C%E4%BF%AE%E6%94%B9Android%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6/" class="post-title-link" itemprop="url">LIEF注入和修改Android二进制文件</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2022-05-12 16:51:54" itemprop="dateCreated datePublished" datetime="2022-05-12T16:51:54+08:00">2022-05-12</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-06-29 12:07:41" itemprop="dateModified" datetime="2022-06-29T12:07:41+08:00">2022-06-29</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>LIEF 使用记录.</p>
-<p>参考了以下文章:<br>
-<strong><a target="_blank" rel="noopener" href="https://thonsun.github.io/2019/07/27/lief-zai-ctfpatch-chang-yong-api/#:~:text=%20LIEF%E4%B8%8D%E4%BB%85%E4%BB%85%E7%94%A8%E4%BA%8EELF%E6%96%87%E4%BB%B6%E7%9A%84%E4%BF%AE%E6%94%B9%EF%BC%8C%E8%BF%98%E5%8F%AF%E4%BB%A5%E5%9C%A8PE%EF%BC%8CMach-o%EF%BC%8CAndroid%E7%AD%89%E6%96%B9%E9%9D%A2%E9%83%BD%E6%9C%89%E5%BA%94%E7%94%A8%E3%80%82%20%E6%8C%89%E7%85%A7%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E7%9A%84%E8%AF%B4%E6%98%8E%EF%BC%8CLIEF%E7%9A%84%E7%9B%AE%E7%9A%84%E6%98%AF%E6%8F%90%E4%BE%9B%E4%B8%80%E4%B8%AA%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%BA%93%EF%BC%8C%E5%8F%AF%E4%BB%A5%E8%A7%A3%E6%9E%90%EF%BC%8C%E4%BF%AE%E6%94%B9%E5%92%8C%E6%8A%BD%E8%B1%A1ELF%EF%BC%8CPE%EF%BC%8CMachO%E5%92%8CAndroid%E6%A0%BC%E5%BC%8F%EF%BC%8C%E7%9B%AE%E5%89%8D%E6%94%AF%E6%8C%81%E7%9A%84%E6%A0%BC%E5%BC%8F%E6%9C%89ELF%2C%20PE%2C,MachO%2C%20DEX%2C%20OAT%2C%20ARTand%20VDEX%E3%80%82">LIEF 在 CTFpatch 常用 API</a></strong><br>
-<strong><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/f53d6ad0e728"> 基于 LIEF 的 InlineHook 实现</a></strong><br>
-<strong><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-246699.htm"> [翻译] 可执行文件操作工具 ——LIEF 使用教程（一）</a></strong><br>
-<strong><a target="_blank" rel="noopener" href="https://github.com/lief-project/tutorials">官方示例</a></strong></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2022/05/12/LIEF%E6%B3%A8%E5%85%A5%E5%92%8C%E4%BF%AE%E6%94%B9Android%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6/" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -953,7 +956,7 @@ Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">29</span>
+          <span class="site-state-item-count">30</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
