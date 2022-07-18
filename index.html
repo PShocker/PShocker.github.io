@@ -176,7 +176,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:18:33" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
+              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:31:04" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
             </span>
 
           
@@ -190,16 +190,30 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>对Magisk源码做一个简单的分析,本人很菜,分析不到位的地方请各位大神指出来.本文以Magisk v25.1为例</p>
-<h2 id="源码下载-编译"><a href="#源码下载-编译" class="headerlink" title="源码下载,编译"></a>源码下载,编译</h2><p>按照<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk">Github</a>所给出的步骤一步步来(最好是挂代理):</p>
-<p>1.以管理员的方式打开命令行窗口,输出clone命令<br><code>git clone --recurse-submodules https://github.com/topjohnwu/Magisk.git</code><br>2.安装python(版本高于3.6),配置环境变量,安装后输入命令<br><code>pip install colorama</code><br>3.配置Android Studio的环境,<code>C:\Path\To\Android Studio\jre\bin</code>和ANDROID_SDK_ROOT,例如<code>C:\Users\Shocker\AppData\Local\Android\Sdk</code><br>4.在Magisk目录里命令行输入<code>python ./build.py ndk</code>下载ndk<br>5.下载ndk后,输入<code>python ./build.py all</code>就可以开始编译</p>
-<p>注:命令行窗口最好是以<strong>管理员</strong>的方式打开,不然会有bug.</p>
-<h2 id="测试及调试"><a href="#测试及调试" class="headerlink" title="测试及调试"></a>测试及调试</h2><p>安装编译后的magisk,如图<br><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/0.jpg"></p>
-<h3 id="Android-Studio调试"><a href="#Android-Studio调试" class="headerlink" title="Android Studio调试"></a>Android Studio调试</h3><p>1.点击Android Studio右上方的Attach<br><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/2.png"><br>2.选择magisk并附加<br><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/3.png"></p>
-<h3 id="查看magiskinit日志"><a href="#查看magiskinit日志" class="headerlink" title="查看magiskinit日志"></a>查看magiskinit日志</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
+          <p>对 Magisk 源码做一个简单的分析，本人很菜，分析不到位的地方请各位大神指出来。本文以 Magisk v25.1 为例</p>
+<h2 id="源码下载编译"><a class="markdownIt-Anchor" href="#源码下载编译"></a> 源码下载，编译</h2>
+<p>按照<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk"> Github</a> 所给出的步骤一步步来 (最好是挂代理):</p>
+<p>1. 以管理员的方式打开命令行窗口，输入 clone 命令<br>
+ <code>git clone --recurse-submodules https://github.com/topjohnwu/Magisk.git</code> <br>
+2. 安装 python (版本高于 3.6), 配置环境变量，安装后输入命令<br>
+ <code>pip install colorama</code> <br>
+3. 配置 Android Studio 的环境， <code>C:\Path\To\Android Studio\jre\bin</code>  和 ANDROID_SDK_ROOT, 例如 <code>C:\Users\Shocker\AppData\Local\Android\Sdk</code> <br>
+4. 在 Magisk 目录里命令行输入 <code>python ./build.py ndk</code>  下载 ndk<br>
+5. 下载 ndk 后，输入 <code>python ./build.py all</code>  就可以开始编译</p>
+<p>注：命令行窗口最好是以<strong>管理员</strong>的方式打开，不然会有 bug.</p>
+<h2 id="测试及调试"><a class="markdownIt-Anchor" href="#测试及调试"></a> 测试及调试</h2>
+<p>安装编译后的 magisk, 如图<br>
+<img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/0.jpg" alt></p>
+<h3 id="android-studio调试"><a class="markdownIt-Anchor" href="#android-studio调试"></a> Android Studio 调试</h3>
+<p>1. 点击 Android Studio 右上方的 Attach<br>
+<img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/2.png" alt><br>
+2. 选择 magisk 并附加<br>
+<img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/3.png" alt></p>
+<h3 id="查看magiskinit日志"><a class="markdownIt-Anchor" href="#查看magiskinit日志"></a> 查看 magiskinit 日志</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">su</span><br></pre></td></tr></table></figure>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmesg | grep magiskinit</span><br></pre></td></tr></table></figure>
-<p><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/1.png"></p>
+<p><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/1.png" alt></p>
 
       
     </div>
@@ -264,8 +278,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一个内联SVC指令的方法.需要AOSP环境.</p>
-<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>对抗各种基于libc.so的Hook.</p>
+          <p>记录一个内联 SVC 指令的方法。需要 AOSP 环境.</p>
+<h2 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h2>
+<p>对抗各种基于 libc.so 的 Hook.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/" rel="contents">
@@ -337,8 +352,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>本文代码主要来源<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk/">Magisk</a>,主要代码语言为kotlin.</p>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>修改AndroidManifest.xml的package(包名)和android:label(应用名)来修改app包名.<br><img src="https://pshocker.github.io/2022/06/26/Android-%E9%9A%8F%E6%9C%BA%E5%8C%85%E5%90%8D/0.png"></p>
+          <p>本文代码主要来源<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk/"> Magisk</a>, 主要代码语言为 kotlin.</p>
+<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
+<p>修改 AndroidManifest.xml 的 package (包名) 和 android:label (应用名) 来修改 app 包名.<br>
+<img src="https://pshocker.github.io/2022/06/26/Android-%E9%9A%8F%E6%9C%BA%E5%8C%85%E5%90%8D/0.png" alt></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/06/26/Android-%E9%9A%8F%E6%9C%BA%E5%8C%85%E5%90%8D/" rel="contents">
@@ -410,7 +427,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <h2 id="起因"><a href="#起因" class="headerlink" title="起因"></a>起因</h2><p>最近<a target="_blank" rel="noopener" href="https://github.com/SsageParuders">泓清</a>和我聊了下Android ebpf的事情,最初是维术大佬开直播讲这个,无奈晦涩难懂,于是自己网上找了点资料查查,还算有点收获.本文以监控syscalls_enter为例.</p>
+          <h2 id="起因"><a class="markdownIt-Anchor" href="#起因"></a> 起因</h2>
+<p>最近<a target="_blank" rel="noopener" href="https://github.com/SsageParuders">泓清</a>和我聊了下 Android ebpf 的事情，最初是维术大佬开直播讲这个，无奈晦涩难懂，于是自己网上找了点资料查查，还算有点收获。本文以监控 syscalls_enter 为例.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/06/18/Android-eBPF%E7%9B%91%E6%8E%A7%E6%89%80%E6%9C%89%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/" rel="contents">
@@ -482,7 +500,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在看Zygisk源码和调试的过程中发现了一种可以检测Zygisk的方法.</p>
+          <p>在看 Zygisk 源码和调试的过程中发现了一种可以检测 Zygisk 的方法.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/06/12/Android-%E6%A3%80%E6%B5%8BZygisk/" rel="contents">
@@ -554,7 +572,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>被Riru-hide隐藏后的so会以匿名内存的形式存在.那么问题来了.<br>Riru-hide是怎么做到匿名内存的,Riru-hide还又什么隐藏手段呢?</p>
+          <p>被 Riru-hide 隐藏后的 so 会以匿名内存的形式存在。那么问题来了.<br>
+Riru-hide 是怎么做到匿名内存的，Riru-hide 还又什么隐藏手段呢？</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/06/06/Riru-hide%E7%AE%80%E5%8D%95%E5%88%86%E6%9E%90/" rel="contents">
@@ -626,7 +645,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录对riru(riru-hide)注入so后的检测与对抗.</p>
+          <p>记录对 riru (riru-hide) 注入 so 后的检测与对抗.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/06/05/Android-Riru%E6%A3%80%E6%B5%8B%E4%B8%8E%E5%AF%B9%E6%8A%97/" rel="contents">
@@ -698,7 +717,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势.<br><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif"></p>
+          <p>最近听朋友说有个游戏每次启动后的进程名都不一样，有时还变成了系统应用的名字，很强势.<br>
+<img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif" alt></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/" rel="contents">
@@ -770,7 +790,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>记录一个通过在原代码插入断点指令的方式来达到反调试的方法.<br>参考YK大佬的文章<br><strong><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-272519.htm#msg_header_h1_7">[原创]2022腾讯游戏安全竞赛安卓客户端决赛writeup</a></strong></p>
+          <p>记录一个通过在原代码插入断点指令的方式来达到反调试的方法.<br>
+ 参考 YK 大佬的文章<br>
+<strong><a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-272519.htm#msg_header_h1_7"> [原创] 2022 腾讯游戏安全竞赛安卓客户端决赛 writeup</a></strong></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/05/18/Android%E5%8F%8D%E8%B0%83%E8%AF%95-SIGTRAP/" rel="contents">
@@ -842,7 +864,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>这几天听朋友说GG可以在不加载驱动的情况下设置内存读写断点,类似PC上ce的”查看谁访问了该内存”功能.网上也查了下资料,发现其实不难.</p>
+          <p>这几天听朋友说 GG 可以在不加载驱动的情况下设置内存读写断点，类似 PC 上 ce 的 &quot;查看谁访问了该内存&quot; 功能。网上也查了下资料，发现其实不难.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/05/14/Android%E5%86%85%E5%AD%98%E8%AF%BB%E5%86%99%E6%96%AD%E7%82%B9-mprotect/" rel="contents">
