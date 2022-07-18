@@ -21,17 +21,22 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="对 Magisk 源码做一个简单的分析，本人很菜，分析不到位的地方请各位大神指出来。本文以 Magisk v25.1 为例  源码下载，编译 按照 Github 所给出的步骤一步步来 (最好是挂代理): 1. 以管理员的方式打开命令行窗口，输出 clone 命令 git clone --recurse-submodules https:&#x2F;&#x2F;github.com&#x2F;topjohnwu&#x2F;Magisk.g">
+  <meta name="description" content="对Magisk源码做一个简单的分析,本人很菜,分析不到位的地方请各位大神指出来.本文以Magisk v25.1为例 源码下载,编译按照Github所给出的步骤一步步来(最好是挂代理): 1.以管理员的方式打开命令行窗口,输出clone命令git clone --recurse-submodules https:&#x2F;&#x2F;github.com&#x2F;topjohnwu&#x2F;Magisk.git2.安装python(">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Magisk源码分析(一)">
 <meta property="og:url" content="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="对 Magisk 源码做一个简单的分析，本人很菜，分析不到位的地方请各位大神指出来。本文以 Magisk v25.1 为例  源码下载，编译 按照 Github 所给出的步骤一步步来 (最好是挂代理): 1. 以管理员的方式打开命令行窗口，输出 clone 命令 git clone --recurse-submodules https:&#x2F;&#x2F;github.com&#x2F;topjohnwu&#x2F;Magisk.g">
+<meta property="og:description" content="对Magisk源码做一个简单的分析,本人很菜,分析不到位的地方请各位大神指出来.本文以Magisk v25.1为例 源码下载,编译按照Github所给出的步骤一步步来(最好是挂代理): 1.以管理员的方式打开命令行窗口,输出clone命令git clone --recurse-submodules https:&#x2F;&#x2F;github.com&#x2F;topjohnwu&#x2F;Magisk.git2.安装python(">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/0.jpg">
+<meta property="og:image" content="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/2.png">
+<meta property="og:image" content="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/3.png">
+<meta property="og:image" content="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/1.png">
 <meta property="article:published_time" content="2022-07-17T16:48:19.000Z">
-<meta property="article:modified_time" content="2022-07-18T05:00:27.105Z">
+<meta property="article:modified_time" content="2022-07-18T05:05:20.060Z">
 <meta property="article:author" content="Shocker">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/0.jpg">
 
 <link rel="canonical" href="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/">
 
@@ -180,7 +185,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:00:27" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
+              <time title="创建时间：2022-07-18 00:48:19 / 修改时间：13:05:20" itemprop="dateCreated datePublished" datetime="2022-07-18T00:48:19+08:00">2022-07-18</time>
             </span>
 
           
@@ -201,28 +206,16 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>对 Magisk 源码做一个简单的分析，本人很菜，分析不到位的地方请各位大神指出来。本文以 Magisk v25.1 为例</p>
-<h2 id="源码下载编译"><a class="markdownIt-Anchor" href="#源码下载编译"></a> 源码下载，编译</h2>
-<p>按照<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk"> Github</a> 所给出的步骤一步步来 (最好是挂代理):</p>
-<p>1. 以管理员的方式打开命令行窗口，输出 clone 命令 <code>git clone --recurse-submodules https://github.com/topjohnwu/Magisk.git</code> <br>
-2. 安装 python (版本高于 3.6), 配置环境变量，安装后输入命令 <code>pip install colorama</code> <br>
-3. 配置 Android Studio 的环境， <code>C:\Path\To\Android Studio\jre\bin</code>  和 ANDROID_SDK_ROOT, 例如 <code>C:\Users\Shocker\AppData\Local\Android\Sdk</code> <br>
-4. 在 Magisk 目录里命令行输入 <code>python ./build.py ndk</code>  下载 ndk<br>
-5. 下载 ndk 后，输入 <code>python ./build.py all</code>  就可以开始编译</p>
-<p>注：命令行窗口最好是以<strong>管理员</strong>的方式打开，不然会有 bug.</p>
-<h2 id="测试及调试"><a class="markdownIt-Anchor" href="#测试及调试"></a> 测试及调试</h2>
-<p>安装编译后的 magisk, 如图<br>
-<a href="0.jpg"></a></p>
-<h3 id="android-studio调试"><a class="markdownIt-Anchor" href="#android-studio调试"></a> Android Studio 调试</h3>
-<p>1. 点击 Android Studio 右上方的 Attach<br>
-<a href="2.png"></a><br>
-2. 选择 magisk 并附加<br>
-<a href="3.png"></a></p>
-<h3 id="magiskinit"><a class="markdownIt-Anchor" href="#magiskinit"></a> magiskinit</h3>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
+        <p>对Magisk源码做一个简单的分析,本人很菜,分析不到位的地方请各位大神指出来.本文以Magisk v25.1为例</p>
+<h2 id="源码下载-编译"><a href="#源码下载-编译" class="headerlink" title="源码下载,编译"></a>源码下载,编译</h2><p>按照<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/Magisk">Github</a>所给出的步骤一步步来(最好是挂代理):</p>
+<p>1.以管理员的方式打开命令行窗口,输出clone命令<br><code>git clone --recurse-submodules https://github.com/topjohnwu/Magisk.git</code><br>2.安装python(版本高于3.6),配置环境变量,安装后输入命令<br><code>pip install colorama</code><br>3.配置Android Studio的环境,<code>C:\Path\To\Android Studio\jre\bin</code>和ANDROID_SDK_ROOT,例如<code>C:\Users\Shocker\AppData\Local\Android\Sdk</code><br>4.在Magisk目录里命令行输入<code>python ./build.py ndk</code>下载ndk<br>5.下载ndk后,输入<code>python ./build.py all</code>就可以开始编译</p>
+<p>注:命令行窗口最好是以<strong>管理员</strong>的方式打开,不然会有bug.</p>
+<h2 id="测试及调试"><a href="#测试及调试" class="headerlink" title="测试及调试"></a>测试及调试</h2><p>安装编译后的magisk,如图<br><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/0.jpg"></p>
+<h3 id="Android-Studio调试"><a href="#Android-Studio调试" class="headerlink" title="Android Studio调试"></a>Android Studio调试</h3><p>1.点击Android Studio右上方的Attach<br><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/2.png"><br>2.选择magisk并附加<br><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/3.png"></p>
+<h3 id="magiskinit"><a href="#magiskinit" class="headerlink" title="magiskinit"></a>magiskinit</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">adb shell</span><br></pre></td></tr></table></figure>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">su</span><br></pre></td></tr></table></figure>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dmesg | grep magiskinit</span><br></pre></td></tr></table></figure>
-<p><a href="1.png"></a></p>
+<p><img src="https://pshocker.github.io/2022/07/18/Magisk%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-%E4%B8%80/1.png"></p>
 
     </div>
 
@@ -318,7 +311,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BA%90%E7%A0%81%E4%B8%8B%E8%BD%BD%E7%BC%96%E8%AF%91"><span class="nav-number">1.</span> <span class="nav-text"> 源码下载，编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%8F%8A%E8%B0%83%E8%AF%95"><span class="nav-number">2.</span> <span class="nav-text"> 测试及调试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#android-studio%E8%B0%83%E8%AF%95"><span class="nav-number">2.1.</span> <span class="nav-text"> Android Studio 调试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#magiskinit"><span class="nav-number">2.2.</span> <span class="nav-text"> magiskinit</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%BA%90%E7%A0%81%E4%B8%8B%E8%BD%BD-%E7%BC%96%E8%AF%91"><span class="nav-number">1.</span> <span class="nav-text">源码下载,编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%8F%8A%E8%B0%83%E8%AF%95"><span class="nav-number">2.</span> <span class="nav-text">测试及调试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Android-Studio%E8%B0%83%E8%AF%95"><span class="nav-number">2.1.</span> <span class="nav-text">Android Studio调试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#magiskinit"><span class="nav-number">2.2.</span> <span class="nav-text">magiskinit</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
