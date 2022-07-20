@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="众所周知，安卓平台读写内存的方式有 1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件  2.ptrace 3.syscall 4. 注入读写 (Magisk 注入) 那么他们谁的读写效率更高呢？">
+  <meta name="description" content="众所周知,安卓平台读写内存的方式有 1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件2.ptrace3.syscall4.注入读写(Magisk注入) 那么他们谁的读写效率更高呢?">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android读写内存效率比较">
 <meta property="og:url" content="https://pshocker.github.io/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="众所周知，安卓平台读写内存的方式有 1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件  2.ptrace 3.syscall 4. 注入读写 (Magisk 注入) 那么他们谁的读写效率更高呢？">
+<meta property="og:description" content="众所周知,安卓平台读写内存的方式有 1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件2.ptrace3.syscall4.注入读写(Magisk注入) 那么他们谁的读写效率更高呢?">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-04-17T06:15:22.000Z">
 <meta property="article:modified_time" content="2022-06-29T04:09:50.553Z">
@@ -207,16 +207,14 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>众所周知，安卓平台读写内存的方式有</p>
-<p>1.read write /proc/xx/mem 文件<br>
- 2.ptrace<br>
-3.syscall<br>
-4. 注入读写 (Magisk 注入)</p>
-<p>那么他们谁的读写效率更高呢？</p>
+        <p>众所周知,安卓平台读写内存的方式有</p>
+<p>1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件<br>2.ptrace<br>3.syscall<br>4.注入读写(Magisk注入)</p>
+<p>那么他们谁的读写效率更高呢?</p>
 <span id="more"></span>
-<p>测试方法很简单。读写 100000 次，记录时间差</p>
+<p>测试方法很简单.读写100000次,记录时间差</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">clock_gettime</span>(CLOCK_MONOTONIC, &amp;old);</span><br><span class="line"><span class="keyword">for</span> (<span class="type">size_t</span> i = <span class="number">0</span>; i &lt; <span class="number">100000</span>; i++)</span><br><span class="line">&#123;</span><br><span class="line">..............</span><br><span class="line">..............</span><br><span class="line">&#125;</span><br><span class="line"><span class="built_in">clock_gettime</span>(CLOCK_MONOTONIC, &amp;now);</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;time passed is: &quot;</span> &lt;&lt; (now.tv_sec - old.tv_sec) * <span class="number">1000</span> + (now.tv_nsec - old.tv_nsec) / <span class="number">1000000</span> &lt;&lt; <span class="string">&quot;ms&quot;</span> &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
-<p>以下是分别测试读写 100000 次所需要的时间</p>
+
+<p>以下是分别测试读写100000次所需要的时间</p>
 <table border="0" cellpadding="0" cellspacing="0" width="646" style="border-collapse:
  collapse;table-layout:fixed;width:485pt">
  <col width="64" style="width:48pt">
@@ -246,10 +244,10 @@
   <td>0.000243ms</td>
  </tr>
 </table>
-<p>可以看出，效率最快的是注入读写，比 syscall 和读 mem 快了近 1000000 倍.</p>
-<p>而 ptrace 效率低很大程度上因为 ptrace 的 PTRACE_ATTACH 和 PTRACE_DETACH 消耗了大量时间.</p>
-<p>读写效率:<br>
- 注入读写 &gt;&gt; syscall &gt; mem &gt; ptrace</p>
+
+<p>可以看出,效率最快的是注入读写,比syscall和读mem快了近1000000倍.</p>
+<p>而ptrace效率低很大程度上因为ptrace的PTRACE_ATTACH和PTRACE_DETACH消耗了大量时间.</p>
+<p>读写效率:<br>注入读写 &gt;&gt; syscall &gt; mem &gt; ptrace</p>
 
     </div>
 
@@ -363,7 +361,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-count">31</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
