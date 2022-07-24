@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="最近 Magisk 出了一个 Zygisk, 貌似是要取代 Riru, 我查了许多资料貌似它还是 zygote 注入，但他有一个排除列表。很强势，可惜的是 wu 大并没有给一个一键打包生成的 Zygisk 模板，莫得办法，只能自己搞一个了.">
+  <meta name="description" content="最近Magisk出了一个Zygisk,貌似是要取代Riru,我查了许多资料貌似它还是zygote注入,但他有一个排除列表.很强势,可惜的是wu大并没有给一个一键打包生成的Zygisk模板,莫得办法,只能自己搞一个了.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Zygisk-ModuleTemplate">
 <meta property="og:url" content="https://pshocker.github.io/2022/03/20/Zygisk-ModuleTemplate/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="最近 Magisk 出了一个 Zygisk, 貌似是要取代 Riru, 我查了许多资料貌似它还是 zygote 注入，但他有一个排除列表。很强势，可惜的是 wu 大并没有给一个一键打包生成的 Zygisk 模板，莫得办法，只能自己搞一个了.">
+<meta property="og:description" content="最近Magisk出了一个Zygisk,貌似是要取代Riru,我查了许多资料貌似它还是zygote注入,但他有一个排除列表.很强势,可惜的是wu大并没有给一个一键打包生成的Zygisk模板,莫得办法,只能自己搞一个了.">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-03-20T14:27:00.000Z">
 <meta property="article:modified_time" content="2022-06-29T04:14:30.324Z">
@@ -207,16 +207,13 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>最近 Magisk 出了一个 Zygisk, 貌似是要取代 Riru, 我查了许多资料貌似它还是 zygote 注入，但他有一个排除列表。很强势，可惜的是 wu 大并没有给一个一键打包生成的 Zygisk 模板，莫得办法，只能自己搞一个了.<span id="more"></span></p>
-<p>wu 大给的模板地址在这里<br>
-<a target="_blank" rel="noopener" href="https://github.com/topjohnwu/zygisk-module-sample"> https://github.com/topjohnwu/zygisk-module-sample</a></p>
+        <p>最近Magisk出了一个Zygisk,貌似是要取代Riru,我查了许多资料貌似它还是zygote注入,但他有一个排除列表.很强势,可惜的是wu大并没有给一个一键打包生成的Zygisk模板,莫得办法,只能自己搞一个了.<span id="more"></span></p>
+<p>wu大给的模板地址在这里<br><a target="_blank" rel="noopener" href="https://github.com/topjohnwu/zygisk-module-sample">https://github.com/topjohnwu/zygisk-module-sample</a></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">module_id</span><br><span class="line">├── module.prop</span><br><span class="line">└── zygisk</span><br><span class="line">    ├── arm64-v8a.so</span><br><span class="line">    ├── armeabi-v7a.so</span><br><span class="line">    ├── x86.so</span><br><span class="line">    └── x86_64.so</span><br></pre></td></tr></table></figure>
-<p>大致意思就是创建这么一个文件结构，把生成的文件按照上图结构放到 /data/adb/modules 里，好在 Riru 的模板可以自动生成一个 zip 包.</p>
-<p>那么抄就完事了<br>
-<a target="_blank" rel="noopener" href="https://github.com/RikkaApps/Riru-ModuleTemplate"> https://github.com/RikkaApps/Riru-ModuleTemplate</a></p>
-<p>大家可以试试把<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&amp;utm_campaign=toutiao.io&amp;utm_medium=toutiao.io&amp;utm_source=toutiao.io">使用 Magisk+riru 实现全局改机</a>改成 Zygisk 版.</p>
-<p>本文所用 Zygisk-ModuleTemplate 模板地址:<br>
-<a target="_blank" rel="noopener" href="https://github.com/PShocker/Zygisk-ModuleTemplate">https://github.com/PShocker/Zygisk-ModuleTemplate</a></p>
+<p>大致意思就是创建这么一个文件结构,把生成的文件按照上图结构放到&#x2F;data&#x2F;adb&#x2F;modules里,好在Riru的模板可以自动生成一个zip包.</p>
+<p>那么抄就完事了<br><a target="_blank" rel="noopener" href="https://github.com/RikkaApps/Riru-ModuleTemplate">https://github.com/RikkaApps/Riru-ModuleTemplate</a></p>
+<p>大家可以试试把<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&utm_campaign=toutiao.io&utm_medium=toutiao.io&utm_source=toutiao.io">使用Magisk+riru实现全局改机</a>改成Zygisk版.</p>
+<p>本文所用Zygisk-ModuleTemplate模板地址:<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Zygisk-ModuleTemplate">https://github.com/PShocker/Zygisk-ModuleTemplate</a></p>
 
     </div>
 
