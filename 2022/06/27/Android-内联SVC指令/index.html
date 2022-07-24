@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="记录一个内联SVC指令的方法.需要AOSP环境. 应用场景对抗各种基于libc.so的Hook.">
+  <meta name="description" content="记录一个内联 SVC 指令的方法。需要 AOSP 环境.  应用场景 对抗各种基于 libc.so 的 Hook.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android-内联SVC指令">
 <meta property="og:url" content="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="记录一个内联SVC指令的方法.需要AOSP环境. 应用场景对抗各种基于libc.so的Hook.">
+<meta property="og:description" content="记录一个内联 SVC 指令的方法。需要 AOSP 环境.  应用场景 对抗各种基于 libc.so 的 Hook.">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/0.png">
 <meta property="og:image" content="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/1.png">
@@ -210,20 +210,30 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>记录一个内联SVC指令的方法.需要AOSP环境.</p>
-<h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>对抗各种基于libc.so的Hook.</p>
+        <p>记录一个内联 SVC 指令的方法。需要 AOSP 环境.</p>
+<h2 id="应用场景"><a class="markdownIt-Anchor" href="#应用场景"></a> 应用场景</h2>
+<p>对抗各种基于 libc.so 的 Hook.</p>
 <span id="more"></span>
-<h2 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h2><p>把libc以静态库的方式内联到可执行文件或so库.从而不调用系统libc.so库的函数</p>
-<h2 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h2><p><code>main.cpp</code></p>
+<h2 id="原理"><a class="markdownIt-Anchor" href="#原理"></a> 原理</h2>
+<p>把 libc 以静态库的方式内联到可执行文件或 so 库。从而不调用系统 libc.so 库的函数</p>
+<h2 id="代码"><a class="markdownIt-Anchor" href="#代码"></a> 代码</h2>
+<p><code>main.cpp</code></p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">sleep</span>(<span class="number">20</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
 <p><code>Android.bp</code></p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">cc_binary &#123;</span><br><span class="line">    name: &quot;testLibc&quot;,</span><br><span class="line">    srcs: [&quot;*.cpp&quot;],</span><br><span class="line"></span><br><span class="line">    cppflags: [</span><br><span class="line">        &quot;-Wno-error&quot;,</span><br><span class="line">        &quot;-Wno-sign-conversion&quot;,</span><br><span class="line">        &quot;-Wno-unused-parameter&quot;,</span><br><span class="line">        &quot;-Wno-sign-conversion&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">    static_executable: true,</span><br><span class="line">    </span><br><span class="line">    static_libs: [</span><br><span class="line">        &quot;libc&quot;,</span><br><span class="line">    ],</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh</span><br><span class="line">lunch 2</span><br><span class="line">cd external/testLibc</span><br><span class="line">mm</span><br></pre></td></tr></table></figure>
-
-<h2 id="效果"><a href="#效果" class="headerlink" title="效果"></a>效果</h2><p>将编译后的文件用ida打开,观察其导入函数.<br><img src="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/0.png"><br>发现是空的,说明sleep函数已经被内联.<br>丢到真机执行,<br><img src="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/1.png"><br>20秒后退出,也没啥问题.</p>
-<h2 id="最后"><a href="#最后" class="headerlink" title="最后"></a>最后</h2><p>理论上可以把AOSP编译的libc.a提取出来当成静态库,用ndk链接,但我试了好久报<code>Segmentation fault</code>错,-_-.希望有个大佬能解决.</p>
-<p>测试用例:<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/PShocker.github.io/releases/download/testLibc/testLibc">https://github.com/PShocker/PShocker.github.io/releases/download/testLibc/testLibc</a></p>
+<h2 id="编译"><a class="markdownIt-Anchor" href="#编译"></a> 编译</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">source build/envsetup.sh</span><br><span class="line">lunch 2</span><br><span class="line">cd external/testLibc</span><br><span class="line">mm</span><br></pre></td></tr></table></figure>
+<h2 id="效果"><a class="markdownIt-Anchor" href="#效果"></a> 效果</h2>
+<p>将编译后的文件用 ida 打开，观察其导入函数.<br>
+<img src="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/0.png" alt><br>
+ 发现是空的，说明 sleep 函数已经被内联.<br>
+ 丢到真机执行，<br>
+<img src="https://pshocker.github.io/2022/06/27/Android-%E5%86%85%E8%81%94SVC%E6%8C%87%E4%BB%A4/1.png" alt><br>
+20 秒后退出，也没啥问题.</p>
+<h2 id="最后"><a class="markdownIt-Anchor" href="#最后"></a> 最后</h2>
+<p>理论上可以把 AOSP 编译的 libc.a 提取出来当成静态库，用 ndk 链接，但我试了好久报 <code>Segmentation fault</code>  错，-_-. 希望有个大佬能解决.</p>
+<p>测试用例:<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/PShocker.github.io/releases/download/testLibc/testLibc">https://github.com/PShocker/PShocker.github.io/releases/download/testLibc/testLibc</a></p>
 
     </div>
 
@@ -322,7 +332,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text">代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">4.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C"><span class="nav-number">5.</span> <span class="nav-text">效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-number">6.</span> <span class="nav-text">最后</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text"> 应用场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text"> 原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%A3%E7%A0%81"><span class="nav-number">3.</span> <span class="nav-text"> 代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">4.</span> <span class="nav-text"> 编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%88%E6%9E%9C"><span class="nav-number">5.</span> <span class="nav-text"> 效果</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-number">6.</span> <span class="nav-text"> 最后</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
