@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="之前我在52上发了一个帖,Android几种特殊绘制方框方法,其中有说到Hook Surfaceflinger进程的eglSwapBuffers函数.">
+  <meta name="description" content="之前我在 52 上发了一个帖，Android 几种特殊绘制方框方法，其中有说到 Hook Surfaceflinger 进程的 eglSwapBuffers 函数.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Magisk注入app并嵌入imgui">
 <meta property="og:url" content="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="之前我在52上发了一个帖,Android几种特殊绘制方框方法,其中有说到Hook Surfaceflinger进程的eglSwapBuffers函数.">
+<meta property="og:description" content="之前我在 52 上发了一个帖，Android 几种特殊绘制方框方法，其中有说到 Hook Surfaceflinger 进程的 eglSwapBuffers 函数.">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/xdwzx.jpg">
 <meta property="og:image" content="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/wzry.jpg">
@@ -210,20 +210,27 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>之前我在52上发了一个帖,<a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1587797-1-1.html">Android几种特殊绘制方框方法</a>,其中有说到Hook Surfaceflinger进程的eglSwapBuffers函数.<span id="more"></span><br>实际上,在安卓12里,Surfaceflinger进程已经没有eglSwapBuffers函数了,而且注入的模板也要改进.<br>需要关闭selinux并且要把linker和libc的路径分别改为</p>
+        <p>之前我在 52 上发了一个帖，<a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-1587797-1-1.html">Android 几种特殊绘制方框方法</a>，其中有说到 Hook Surfaceflinger 进程的 eglSwapBuffers 函数.<span id="more"></span><br>
+实际上，在安卓 12 里，Surfaceflinger 进程已经没有 eglSwapBuffers 函数了，而且注入的模板也要改进.<br>
+ 需要关闭 selinux 并且要把 linker 和 libc 的路径分别改为</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/apex/com.android.runtime/bin/linker64</span><br><span class="line">/apex/com.android.runtime/lib64/bionic/libc.so</span><br></pre></td></tr></table></figure>
-<p>具体可以看这篇github<br><a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">https://github.com/SsageParuders/AndroidPtraceInject</a></p>
-<p>说回正题,既然Surfaceflinger进程没有eglSwapBuffers函数,那么eglSwapBuffers肯定是在app内部调用的,直接hook了app内部eglSwapBuffers函数就行.</p>
+<p>具体可以看这篇 github<br>
+<a target="_blank" rel="noopener" href="https://github.com/SsageParuders/AndroidPtraceInject">https://github.com/SsageParuders/AndroidPtraceInject</a></p>
+<p>说回正题，既然 Surfaceflinger 进程没有 eglSwapBuffers 函数，那么 eglSwapBuffers 肯定是在 app 内部调用的，直接 hook 了 app 内部 eglSwapBuffers 函数就行.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">init_dobby</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">void</span> *sym_eglSwapBuffers = <span class="built_in">DobbySymbolResolver</span>(<span class="literal">NULL</span>, <span class="string">&quot;eglSwapBuffers&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != sym_eglSwapBuffers)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;sym_eglSwapBuffers:%llx&quot;</span>, (<span class="type">unsigned</span> <span class="type">long</span> <span class="type">long</span>)sym_eglSwapBuffers);</span><br><span class="line">        <span class="built_in">DobbyHook</span>(sym_eglSwapBuffers, (<span class="type">void</span> *)new_eglSwapBuffers, (<span class="type">void</span> **)&amp;ori_eglSwapBuffers);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>我这里选用Dobby的hook框架,参考了<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&utm_campaign=toutiao.io&utm_medium=toutiao.io&utm_source=toutiao.io">使用Magisk+riru实现全局改机</a>的用法.</p>
-<p>在hook后的new_eglSwapBuffers里完成imgui的初始化,显示即可.基本上不需要怎么改动imgui的代码.</p>
+<p>我这里选用 Dobby 的 hook 框架，参考了<a target="_blank" rel="noopener" href="https://www.cnblogs.com/luoyesiqiu/p/magisk_riru.html#at?hmsr=toutiao.io&amp;utm_campaign=toutiao.io&amp;utm_medium=toutiao.io&amp;utm_source=toutiao.io">使用 Magisk+riru 实现全局改机</a>的用法.</p>
+<p>在 hook 后的 new_eglSwapBuffers 里完成 imgui 的初始化，显示即可。基本上不需要怎么改动 imgui 的代码.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">IMGUI_CHECKVERSION</span>();</span><br><span class="line">ImGui::<span class="built_in">CreateContext</span>();</span><br><span class="line">ImGuiIO&amp; io = ImGui::<span class="built_in">GetIO</span>();</span><br><span class="line"></span><br><span class="line"><span class="comment">// Disable loading/saving of .ini file from disk.</span></span><br><span class="line"><span class="comment">// <span class="doctag">FIXME:</span> Consider using LoadIniSettingsFromMemory() / SaveIniSettingsToMemory() to save in appropriate location for Android.</span></span><br><span class="line">io.IniFilename = <span class="literal">NULL</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup Dear ImGui style</span></span><br><span class="line">ImGui::<span class="built_in">StyleColorsDark</span>();</span><br><span class="line"><span class="comment">//ImGui::StyleColorsClassic();</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Setup Platform/Renderer backends</span></span><br><span class="line"><span class="built_in">ImGui_ImplAndroid_Init</span>(<span class="literal">nullptr</span>);</span><br><span class="line"><span class="built_in">ImGui_ImplOpenGL3_Init</span>(<span class="string">&quot;#version 300 es&quot;</span>);</span><br><span class="line">g_Initialized = <span class="literal">true</span>;</span><br><span class="line">.......</span><br></pre></td></tr></table></figure>
-
-<p>之后用Zygisk-ModuleTemplate模板编译,magisk安装就行.</p>
+<p>之后用 Zygisk-ModuleTemplate 模板编译，magisk 安装就行.</p>
 <p>不足之处:</p>
-<p>1.由于和游戏共用surface,如果绘制异常游戏直接闪退.<br>2.进行复杂绘制的时候会卡游戏画面,降低帧率.<br>3.兼容性差,不支持大部分的ue4引擎的游戏.</p>
-<p>完美的内部绘制方案参考<br><strong><a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/">Magisk注入app并嵌入imgui(二)</a></strong></p>
-<p>最后效果如图<br><img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/xdwzx.jpg"><br><img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/wzry.jpg"></p>
+<p>1. 由于和游戏共用 surface, 如果绘制异常游戏直接闪退.<br>
+2. 进行复杂绘制的时候会卡游戏画面，降低帧率.<br>
+3. 兼容性差，不支持大部分的 ue4 引擎的游戏.</p>
+<p>完美的内部绘制方案参考<br>
+<strong><a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/"> Magisk 注入 app 并嵌入 imgui (二)</a></strong></p>
+<p>最后效果如图<br>
+<img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/xdwzx.jpg" alt><br>
+<img src="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/wzry.jpg" alt></p>
 
     </div>
 
