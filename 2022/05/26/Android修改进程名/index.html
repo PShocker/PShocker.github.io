@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势.">
+  <meta name="description" content="最近听朋友说有个游戏每次启动后的进程名都不一样，有时还变成了系统应用的名字，很强势.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android-修改进程名">
 <meta property="og:url" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势.">
+<meta property="og:description" content="最近听朋友说有个游戏每次启动后的进程名都不一样，有时还变成了系统应用的名字，很强势.">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif">
 <meta property="og:image" content="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/0.jpg">
@@ -213,35 +213,36 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>最近听朋友说有个游戏每次启动后的进程名都不一样,有时还变成了系统应用的名字,很强势.<br><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif"></p>
+        <p>最近听朋友说有个游戏每次启动后的进程名都不一样，有时还变成了系统应用的名字，很强势.<br>
+<img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/4.gif" alt></p>
 <span id="more"></span>
 <p>其原理就是修改</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">/prco/pid/stat</span><br><span class="line">/prco/pid/status</span><br><span class="line">/prco/pid/cmdline</span><br></pre></td></tr></table></figure>
-<p>,来修改进程名.</p>
-<p>对于前两种方法,调用prctl函数就可以修改.</p>
+<p>, 来修改进程名.</p>
+<p>对于前两种方法，调用 prctl 函数就可以修改.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">prctl</span><span class="params">(<span class="type">int</span> __option, ...)</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>而对于&#x2F;prco&#x2F;pid&#x2F;cmdline,也就是main参数里的argv[0],修改就比较麻烦</p>
-<p>在linux系统上,可以直接在main函数里修改argv[0]来修改进程名,但在android的app里,并没有main函数和argv参数.</p>
+<p>而对于 /prco/pid/cmdline, 也就是 main 参数里的 argv [0], 修改就比较麻烦</p>
+<p>在 linux 系统上，可以直接在 main 函数里修改 argv [0] 来修改进程名，但在 android 的 app 里，并没有 main 函数和 argv 参数.</p>
 <p>但也并非没有办法.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Linux 还有环境变量参数信息，表示进程执行需要的所有环境变量信息。通过全局变量</span><br><span class="line">char **environ;可以访问环境变量.</span><br></pre></td></tr></table></figure>
-
 <p>还有最关键的一点是:</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">命令行参数argv和环境变量信息environ是在一块连续的内存中表示的，并且environ紧跟在argv后面</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/0.jpg"></p>
-<p>也就是说可以根据environ来找到argv[0]</p>
+<p><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/0.jpg" alt></p>
+<p>也就是说可以根据 environ 来找到 argv [0]</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="type">char</span> **environ;</span><br><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;environ:%llx&quot;</span>,environ[<span class="number">0</span>]);</span><br></pre></td></tr></table></figure>
-
-<p>在logcat里找到日志</p>
+<p>在 logcat 里找到日志</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">2022-05-26 22:55:34.680 22933-22933/com.shocker.processhide D/Shocker: environ:7fd85b633b</span><br></pre></td></tr></table></figure>
-
-<p>打开ceserver,查看0x7fd85b633b附近的内存<br><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/1.png"></p>
-<p>0x7fd85b62d8就是进程名了,直接修改它.<br><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/2.png"></p>
-<p>之后在用ps -ef|grep 命令查看</p>
-<p><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/3.png"></p>
-<p>哈,发现它的进程名已经被修改了.</p>
-<p>参考了:<br><a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/system/250654.html">Linux进程隐藏：初级篇</a><br><a target="_blank" rel="noopener" href="https://www.modb.pro/db/104829">如何改变进程名称</a><br><a target="_blank" rel="noopener" href="https://blog.csdn.net/hengshan/article/details/7835981">Linux修改进程名称(setproctitle())</a></p>
+<p>打开 ceserver, 查看 0x7fd85b633b 附近的内存<br>
+<img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/1.png" alt></p>
+<p>0x7fd85b62d8 就是进程名了，直接修改它.<br>
+<img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/2.png" alt></p>
+<p>之后在用 ps -ef|grep 命令查看</p>
+<p><img src="https://pshocker.github.io/2022/05/26/Android%E4%BF%AE%E6%94%B9%E8%BF%9B%E7%A8%8B%E5%90%8D/3.png" alt></p>
+<p>哈，发现它的进程名已经被修改了.</p>
+<p>参考了:<br>
+<a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/system/250654.html">Linux 进程隐藏：初级篇</a><br>
+<a target="_blank" rel="noopener" href="https://www.modb.pro/db/104829">如何改变进程名称</a><br>
+<a target="_blank" rel="noopener" href="https://blog.csdn.net/hengshan/article/details/7835981"> Linux 修改进程名称 (setproctitle ())</a></p>
 
     </div>
 
