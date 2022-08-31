@@ -357,6 +357,7 @@ NexT.utils = {
 
   updateSidebarPosition: function() {
     var sidebarNav = document.querySelector('.sidebar-nav');
+    var sidebarNavLinks = document.querySelector('.sidebar-links');
     var hasTOC = document.querySelector('.post-toc');
     if (hasTOC) {
       sidebarNav.style.display = '';
@@ -364,6 +365,7 @@ NexT.utils = {
       document.querySelector('.sidebar-nav-toc').click();
     } else {
       sidebarNav.style.display = 'none';
+      sidebarNavLinks.style.display = 'none';
       sidebarNav.classList.remove('motion-element');
       document.querySelector('.sidebar-nav-overview').click();
     }
