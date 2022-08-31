@@ -2,6 +2,7 @@
 
 var Affix = {
   init: function(element, options) {
+    this.links=document.querySelector('.sidebar-links');
     this.element = element;
     this.offset = options || 0;
     this.affixed = null;
@@ -45,6 +46,7 @@ var Affix = {
     setTimeout(this.checkPosition.bind(this), 1);
   },
   checkPosition: function() {
+    console.log(this.links)
     if (window.getComputedStyle(this.element).display === 'none') return;
     let height = this.element.offsetHeight;
     let { offset } = this;
@@ -55,10 +57,13 @@ var Affix = {
     if (this.affixed !== affix) {
       if (this.unpin != null) this.element.style.top = '';
       let affixType = 'affix' + (affix ? '-' + affix : '');
+      let linksType = 'links' + (affix ? '-' + affix : '');
       this.affixed = affix;
       this.unpin = affix === 'bottom' ? this.getPinnedOffset() : null;
       this.element.classList.remove('affix', 'affix-top', 'affix-bottom');
       this.element.classList.add(affixType);
+      this.links.classList.remove('links', 'links-top', 'links-bottom');
+      this.links.classList.add(linksType);
     }
     if (affix === 'bottom') {
       this.element.style.top = scrollHeight - height - offsetBottom + 'px';

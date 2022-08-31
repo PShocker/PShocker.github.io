@@ -1176,7 +1176,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #ccff45;
+  background: #3cb6aa;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -2313,6 +2313,10 @@ ul.breadcrumb li + li:last-child {
 .sidebar-inner.affix {
   position: fixed;
   top: 12px;
+}
+.sidebar-inner.links {
+  position: fixed;
+  top: 169.82px;
 }
 .sidebar-inner.affix-bottom {
   position: absolute;
