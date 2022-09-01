@@ -21,12 +21,12 @@
     var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.">
+  <meta name="description" content="在获取系统触摸后,剩下的就是解决数据传递和画框子的问题了.">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Android外部imgui绘制(三)">
 <meta property="og:url" content="https://pshocker.github.io/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/index.html">
 <meta property="og:site_name" content="Shocker">
-<meta property="og:description" content="在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.">
+<meta property="og:description" content="在获取系统触摸后,剩下的就是解决数据传递和画框子的问题了.">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/pic.jpg">
 <meta property="article:published_time" content="2022-03-24T03:25:43.000Z">
@@ -209,46 +209,40 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.</p>
+        <p>在获取系统触摸后,剩下的就是解决数据传递和画框子的问题了.</p>
 <span id="more"></span>
-<h2 id="数据传递"><a class="markdownIt-Anchor" href="#数据传递"></a> 数据传递</h2>
-<p>由于 jni 是没有 root 权限的，所以只能由 java 端运行一个有 root 权限的进程，然后在 root 进程里将读取到的数据传回 imgui 进程.</p>
-<h3 id="匿名共享内存"><a class="markdownIt-Anchor" href="#匿名共享内存"></a> 匿名共享内存</h3>
-<p>这是我比较推荐的一个做法，首先用 open &quot;/dev/ashmem&quot; 打开匿名共享内存，设置大小，然后 mmap 函数映射到本地内存.</p>
+<h2 id="数据传递"><a href="#数据传递" class="headerlink" title="数据传递"></a>数据传递</h2><p>由于jni是没有root权限的,所以只能由java端运行一个有root权限的进程,然后在root进程里将读取到的数据传回imgui进程.</p>
+<h3 id="匿名共享内存"><a href="#匿名共享内存" class="headerlink" title="匿名共享内存"></a>匿名共享内存</h3><p>这是我比较推荐的一个做法,首先用open “&#x2F;dev&#x2F;ashmem”打开匿名共享内存,设置大小,然后mmap函数映射到本地内存.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">fd =  <span class="built_in">open</span>(<span class="string">&quot;/dev/ashmem&quot;</span>, O_RDWR);</span><br><span class="line"><span class="built_in">ioctl</span>(fd, ASHMEM_SET_SIZE, <span class="built_in">sizeof</span>(AshmemData));</span><br><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>之后通过 <s>tcp 或 udp</s> unix socket 将 fd 传给 imgui 进程里.</p>
+<p>之后通过 <del>tcp或udp</del> unix socket将fd传给imgui进程里.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">send_asheme_fd</span>(fd);</span><br></pre></td></tr></table></figure>
-<p>imgui 进程同样使用 mmap 来映射匿名共享内存</p>
+<p>imgui进程同样使用mmap来映射匿名共享内存</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mmap</span>(<span class="literal">NULL</span>, <span class="built_in">sizeof</span>(AshmemData), PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</span><br></pre></td></tr></table></figure>
-<p>映射建立后，双方就可以使用匿名共享内存通信了.</p>
-<h2 id="共享内存结构"><a class="markdownIt-Anchor" href="#共享内存结构"></a> 共享内存结构</h2>
-<p>一般来说，共享内存包括了需要绘制的人物坐标，载具坐标，物品坐标，还需要额外传递一个 fps 值，这个 fps 值用来读取内存，画面同步.</p>
+<p>映射建立后,双方就可以使用匿名共享内存通信了.</p>
+<h2 id="共享内存结构"><a href="#共享内存结构" class="headerlink" title="共享内存结构"></a>共享内存结构</h2><p>一般来说,共享内存包括了需要绘制的人物坐标,载具坐标,物品坐标,还需要额外传递一个fps值,这个fps值用来读取内存,画面同步.</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">AshmemData</span>&#123;</span><br><span class="line">	PlayerData Player[<span class="number">1000</span>]; <span class="comment">//人物数据</span></span><br><span class="line">	<span class="type">int</span> Playersize; <span class="comment">//人物总数</span></span><br><span class="line">	VehicleData Vehicle[<span class="number">1000</span>]; <span class="comment">//载具数据</span></span><br><span class="line">	<span class="type">int</span> Vehiclesize; <span class="comment">//载具数量</span></span><br><span class="line">	ItemData Item[<span class="number">1000</span>]; <span class="comment">// 物品数据</span></span><br><span class="line">	<span class="type">int</span> Itemsize; <span class="comment">// 物品数量</span></span><br><span class="line">	<span class="type">float</span> fps; <span class="comment">//fps,帧率</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<h2 id="读取数据"><a class="markdownIt-Anchor" href="#读取数据"></a> 读取数据</h2>
-<p>如果是用外部读写的方案，那么可以选择如下方法</p>
+
+<h2 id="读取数据"><a href="#读取数据" class="headerlink" title="读取数据"></a>读取数据</h2><p>如果是用外部读写的方案,那么可以选择如下方法</p>
 <ul>
-<li>读取 /proc/pid/mem 文件.</li>
-<li>读取 /proc/pid/pagemap 文件.</li>
-<li>ptrace 读内存</li>
+<li>读取&#x2F;proc&#x2F;pid&#x2F;mem文件.</li>
+<li>读取&#x2F;proc&#x2F;pid&#x2F;pagemap文件.</li>
+<li>ptrace读内存</li>
 <li>syscall(SYS_process_vm_readv, pid, local, 1, remote, 1, 0);</li>
 </ul>
-<p>如果用 Magisk 注入的 imgui, 那就比较简单，直接读取即可.</p>
-<p>这里建议有几类数据就开几个线程，比如这里有 3 类数据 (人物，载具，物品), 就开三个线程.</p>
-<h2 id="数据读取速率与画面刷新速率同步"><a class="markdownIt-Anchor" href="#数据读取速率与画面刷新速率同步"></a> 数据读取速率与画面刷新速率同步</h2>
-<p>屏幕刷新速率通常是固定的，比如 120hz 的屏幕，每更新 1 帧的时间大约为 0.0083 秒，但是你并不能保证读取数据的速率也是 0.0083 秒。如果不加限制，就会造成性能的浪费，<br>
- 比如屏幕刷新率比数据读取率快，那么就会导致几帧刷新同一画面.<br>
- 如果屏幕刷新率比数据读取率慢，就会导致损失几帧的数据.</p>
+<p>如果用Magisk注入的imgui,那就比较简单,直接读取即可.</p>
+<p>这里建议有几类数据就开几个线程,比如这里有3类数据(人物,载具,物品),就开三个线程.</p>
+<h2 id="数据读取速率与画面刷新速率同步"><a href="#数据读取速率与画面刷新速率同步" class="headerlink" title="数据读取速率与画面刷新速率同步"></a>数据读取速率与画面刷新速率同步</h2><p>屏幕刷新速率通常是固定的,比如120hz的屏幕,每更新1帧的时间大约为0.0083秒,但是你并不能保证读取数据的速率也是0.0083秒.如果不加限制,就会造成性能的浪费,<br>比如屏幕刷新率比数据读取率快,那么就会导致几帧刷新同一画面.<br>如果屏幕刷新率比数据读取率慢,就会导致损失几帧的数据.</p>
 <p>通常的做法是计算出每次数据读取的时间.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">clock_gettime(CLOCK_MONOTONIC,&amp;old);</span><br><span class="line">clock_gettime(CLOCK_MONOTONIC,&amp;now);</span><br></pre></td></tr></table></figure>
-<p>clock_gettime (CLOCK_MONOTONIC,&amp;now); 可以读取到当前的时间.<br>
- 在所有线程开始读取前先调用这个函数，读取数据后调用。然后相减即可得到读取一次数据的时间.</p>
-<p>同样的，在 imgui 渲染线程里同样需要调用这个函数来计算渲染一次所需要的时间</p>
-<p>如果谁的时间少，就需要调用 usleep 函数来等待到 fps 值.</p>
+<p>clock_gettime(CLOCK_MONOTONIC,&amp;now);可以读取到当前的时间.<br>在所有线程开始读取前先调用这个函数,读取数据后调用.然后相减即可得到读取一次数据的时间.</p>
+<p>同样的,在imgui渲染线程里同样需要调用这个函数来计算渲染一次所需要的时间</p>
+<p>如果谁的时间少,就需要调用usleep函数来等待到fps值.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">usleep(time)</span><br></pre></td></tr></table></figure>
-<h2 id="imgui画框子文字"><a class="markdownIt-Anchor" href="#imgui画框子文字"></a> imgui 画框子，文字</h2>
-<p>1.imgui 画框子</p>
+
+<h2 id="imgui画框子-文字"><a href="#imgui画框子-文字" class="headerlink" title="imgui画框子,文字"></a>imgui画框子,文字</h2><p>1.imgui画框子</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawRect</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, <span class="type">int</span> w, <span class="type">int</span> h, RGBA *color, <span class="type">int</span> thickness)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddRect</span>(<span class="built_in">ImVec2</span>(x, y), <span class="built_in">ImVec2</span>(x + w, y + h), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), <span class="number">0</span>, <span class="number">0</span>, thickness);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>2.imgui 画文字</p>
+
+<p>2.imgui画文字</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">DrawTool::DrawNewText</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> y, RGBA *color, <span class="type">const</span> <span class="type">char</span> *str)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ImGui::<span class="built_in">GetOverlayDrawList</span>()-&gt;<span class="built_in">AddText</span>(<span class="built_in">ImVec2</span>(x, y), ImGui::<span class="built_in">ColorConvertFloat4ToU32</span>(<span class="built_in">ImVec4</span>(color-&gt;R / <span class="number">255.0</span>, color-&gt;G / <span class="number">255.0</span>, color-&gt;B / <span class="number">255.0</span>, color-&gt;A / <span class="number">255.0</span>)), std::<span class="built_in">string</span>(str).<span class="built_in">c_str</span>());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p><img src="https://pshocker.github.io/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/pic.jpg" alt="pic"></p>
 
@@ -349,7 +343,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%92"><span class="nav-number">1.</span> <span class="nav-text"> 数据传递</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8C%BF%E5%90%8D%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98"><span class="nav-number">1.1.</span> <span class="nav-text"> 匿名共享内存</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text"> 共享内存结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE"><span class="nav-number">3.</span> <span class="nav-text"> 读取数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%8F%96%E9%80%9F%E7%8E%87%E4%B8%8E%E7%94%BB%E9%9D%A2%E5%88%B7%E6%96%B0%E9%80%9F%E7%8E%87%E5%90%8C%E6%AD%A5"><span class="nav-number">4.</span> <span class="nav-text"> 数据读取速率与画面刷新速率同步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#imgui%E7%94%BB%E6%A1%86%E5%AD%90%E6%96%87%E5%AD%97"><span class="nav-number">5.</span> <span class="nav-text"> imgui 画框子，文字</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E4%BC%A0%E9%80%92"><span class="nav-number">1.</span> <span class="nav-text">数据传递</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8C%BF%E5%90%8D%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98"><span class="nav-number">1.1.</span> <span class="nav-text">匿名共享内存</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">共享内存结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE"><span class="nav-number">3.</span> <span class="nav-text">读取数据</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E8%AF%BB%E5%8F%96%E9%80%9F%E7%8E%87%E4%B8%8E%E7%94%BB%E9%9D%A2%E5%88%B7%E6%96%B0%E9%80%9F%E7%8E%87%E5%90%8C%E6%AD%A5"><span class="nav-number">4.</span> <span class="nav-text">数据读取速率与画面刷新速率同步</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#imgui%E7%94%BB%E6%A1%86%E5%AD%90-%E6%96%87%E5%AD%97"><span class="nav-number">5.</span> <span class="nav-text">imgui画框子,文字</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
