@@ -198,9 +198,12 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>众所周知,安卓平台读写内存的方式有</p>
-<p>1.read write &#x2F;proc&#x2F;xx&#x2F;mem 文件<br>2.ptrace<br>3.syscall<br>4.注入读写(Magisk注入)</p>
-<p>那么他们谁的读写效率更高呢?</p>
+          <p>众所周知，安卓平台读写内存的方式有</p>
+<p>1.read write /proc/xx/mem 文件<br>
+ 2.ptrace<br>
+3.syscall<br>
+4. 注入读写 (Magisk 注入)</p>
+<p>那么他们谁的读写效率更高呢？</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/17/Android%E8%AF%BB%E5%86%99%E5%86%85%E5%AD%98%E6%95%88%E7%8E%87%E6%AF%94%E8%BE%83/" rel="contents">
@@ -272,10 +275,10 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>对于可执行文件创建的surface来说.它的uid和pid都为0.</p>
-<p>对于app内部创建的surface来说.它的uid和pid都不为0.</p>
-<p>见<a href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/">Magisk注入app并嵌入imgui(三)</a></p>
-<p>我们只需要找到app创建的surface,并把它的pid和uid改成0,就可以实现可执行文件的效果.</p>
+          <p>对于可执行文件创建的 surface 来说。它的 uid 和 pid 都为 0.</p>
+<p>对于 app 内部创建的 surface 来说。它的 uid 和 pid 都不为 0.</p>
+<p>见<a href="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/"> Magisk 注入 app 并嵌入 imgui (三)</a></p>
+<p>我们只需要找到 app 创建的 surface, 并把它的 pid 和 uid 改成 0, 就可以实现可执行文件的效果.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/16/Hook-surfaceflinger%E8%BF%9B%E7%A8%8B%E7%BB%99surface%E5%BC%80%E5%90%8E%E9%97%A8/" rel="contents">
@@ -347,7 +350,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在<a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/">Magisk注入app并嵌入imgui(二)</a>里成功创建了surface,但是imgui的画面并没有显示出来,<br><img src="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/why.jpg"></p>
+          <p>在<a href="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/"> Magisk 注入 app 并嵌入 imgui (二)</a> 里成功创建了 surface, 但是 imgui 的画面并没有显示出来，<br>
+<img src="https://pshocker.github.io/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/why.jpg" alt></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/16/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%B8%89/" rel="contents">
@@ -419,8 +423,12 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>之前我写过一篇文章介绍了<a href="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/">Magisk注入app并嵌入imgui</a>.<br>其原理就是Hook app进程的eglSwapBuffers函数.在其中完成imgui的初始化的显示.</p>
-<p>但我测试UE4游戏的时候发现,要么画面出不来,要么就闪退.<br>大概率是和引擎冲突了…<br>淦.<br><img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg"></p>
+          <p>之前我写过一篇文章介绍了<a href="https://pshocker.github.io/2022/03/21/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui/"> Magisk 注入 app 并嵌入 imgui</a>.<br>
+ 其原理就是 Hook app 进程的 eglSwapBuffers 函数。在其中完成 imgui 的初始化的显示.</p>
+<p>但我测试 UE4 游戏的时候发现，要么画面出不来，要么就闪退.<br>
+ 大概率是和引擎冲突了…<br>
+ 淦.<br>
+<img src="https://pshocker.github.io/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/g.jpg" alt></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/15/Magisk%E6%B3%A8%E5%85%A5app%E5%B9%B6%E5%B5%8C%E5%85%A5imgui-%E4%BA%8C/" rel="contents">
@@ -492,7 +500,11 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>之前我在<a href="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/">Android外部imgui绘制(二)</a>里说过<br><strong>在Android外部imgui绘制(一)里介绍了怎么实现一个外部imgui,其实还有一种方法,就是在aosp环境下编译一个可执行文件出来,有点类似于</strong><br><strong>可执行文件+skia绘制</strong><br><strong>但这个其实很麻烦,需要下载android源码(100多g),然后还要自己编译,最后还得修改代码.所以不太建议这么做.虽然效率可能确实会有提升.</strong><br>好吧,我来填坑了.</p>
+          <p>之前我在<a href="https://pshocker.github.io/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/"> Android 外部 imgui 绘制 (二)</a> 里说过<br>
+<strong>在 Android 外部 imgui 绘制 (一) 里介绍了怎么实现一个外部 imgui, 其实还有一种方法，就是在 aosp 环境下编译一个可执行文件出来，有点类似于</strong><br>
+<strong>可执行文件 + skia 绘制</strong><br>
+<strong>但这个其实很麻烦，需要下载 android 源码 (100 多 g), 然后还要自己编译，最后还得修改代码。所以不太建议这么做。虽然效率可能确实会有提升.</strong><br>
+ 好吧，我来填坑了.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/15/Android%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6imgui%E7%BB%98%E5%88%B6/" rel="contents">
@@ -564,8 +576,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在之前的一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/">Android外部imgui绘制(二)–补充
-</a>提到了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192">Unity全自动hook的实现</a>.那么就来实战一下.<br>游戏:<a target="_blank" rel="noopener" href="https://tp2.uu.cc/">神庙逃亡2</a></p>
+          <p>在之前的一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/"> Android 外部 imgui 绘制 (二)–补充<br>
+</a>提到了<a target="_blank" rel="noopener" href="https://0x.mk/?p=192"> Unity 全自动 hook 的实现</a>。那么就来实战一下.<br>
+ 游戏:<a target="_blank" rel="noopener" href="https://tp2.uu.cc/"> 神庙逃亡 2</a></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/04/Magisk%E6%B3%A8%E5%85%A5Unity%E5%85%A8%E8%87%AA%E5%8A%A8Hook%E5%AE%9E%E6%88%98-%E7%A5%9E%E5%BA%99%E9%80%83%E4%BA%A12/" rel="contents">
@@ -637,7 +650,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在上一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/">Android外部imgui绘制(二)–补充</a>补充说明了ue4游戏下触摸输入的获取方法.本篇介绍一种更为通用的获取系统输入的方法.</p>
+          <p>在上一篇文章<a href="https://pshocker.github.io/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/"> Android 外部 imgui 绘制 (二)–补充</a>补充说明了 ue4 游戏下触摸输入的获取方法。本篇介绍一种更为通用的获取系统输入的方法.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/02/Android-Hook-native%E5%B1%82%E8%8E%B7%E5%8F%96%E7%B3%BB%E7%BB%9F%E8%BE%93%E5%85%A5/" rel="contents">
@@ -709,7 +722,8 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>前几天看到评论区有个小伙伴问我,ue4游戏怎么寻找android_app和获取系统输入.<br>我在这说一下.</p>
+          <p>前几天看到评论区有个小伙伴问我，ue4 游戏怎么寻找 android_app 和获取系统输入.<br>
+ 我在这说一下.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/04/01/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C-%E8%A1%A5%E5%85%85/" rel="contents">
@@ -781,7 +795,7 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在获取系统触摸后,剩下的就是解决数据传递和画框子的问题了.</p>
+          <p>在获取系统触摸后，剩下的就是解决数据传递和画框子的问题了.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/03/24/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%B8%89/" rel="contents">
@@ -853,7 +867,9 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          <p>在Android外部imgui绘制(一)里介绍了怎么实现一个外部imgui,其实还有一种方法,就是在aosp环境下编译一个可执行文件出来,有点类似于<br><a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_executable_draw">可执行文件+skia绘制</a><br>但这个其实很麻烦,需要下载android源码(100多g),然后还要自己编译,最后还得修改代码.所以不太建议这么做.虽然效率可能确实会有提升.</p>
+          <p>在 Android 外部 imgui 绘制 (一) 里介绍了怎么实现一个外部 imgui, 其实还有一种方法，就是在 aosp 环境下编译一个可执行文件出来，有点类似于<br>
+<a target="_blank" rel="noopener" href="https://github.com/PShocker/Android_executable_draw">可执行文件 + skia 绘制</a><br>
+但这个其实很麻烦，需要下载 android 源码 (100 多 g), 然后还要自己编译，最后还得修改代码。所以不太建议这么做。虽然效率可能确实会有提升.</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2022/03/23/Android%E5%A4%96%E9%83%A8imgui%E7%BB%98%E5%88%B6-%E4%BA%8C/" rel="contents">
@@ -925,7 +941,7 @@
         <li class="sidebar-nav-toc">
           文章目录
         </li>
-        <li class="sidebar-nav-overview">
+        <li class="sidebar-nav-overview" style="display: none;">
           站点概览
         </li>
       </ul>
