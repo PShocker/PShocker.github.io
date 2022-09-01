@@ -1,8 +1,8 @@
 /* global NexT, CONFIG */
 
 var Affix = {
-  init: function(element, options) {
-    this.links=document.querySelector('.sidebar-links');
+  init: function (element, options) {
+    this.links = document.querySelector('.sidebar-links');
     this.element = element;
     this.offset = options || 0;
     this.affixed = null;
@@ -18,7 +18,7 @@ var Affix = {
       }
     });
   },
-  getState: function(scrollHeight, height, offsetTop, offsetBottom) {
+  getState: function (scrollHeight, height, offsetTop, offsetBottom) {
     let scrollTop = window.scrollY;
     let targetHeight = window.innerHeight;
     if (offsetTop != null && this.affixed === 'top') {
@@ -36,7 +36,7 @@ var Affix = {
     if (offsetBottom != null && (colliderTop + colliderHeight >= scrollHeight - offsetBottom)) return 'bottom';
     return false;
   },
-  getPinnedOffset: function() {
+  getPinnedOffset: function () {
     if (this.pinnedOffset) return this.pinnedOffset;
     this.element.classList.remove('affix-top', 'affix-bottom');
     this.element.classList.add('affix');
@@ -45,8 +45,8 @@ var Affix = {
   checkPositionWithEventLoop() {
     setTimeout(this.checkPosition.bind(this), 1);
   },
-  checkPosition: function() {
-    console.log(this.links)
+  checkPosition: function () {
+    // console.log(this.links)
     if (window.getComputedStyle(this.element).display === 'none') return;
     let height = this.element.offsetHeight;
     let { offset } = this;
@@ -64,6 +64,12 @@ var Affix = {
       this.element.classList.add(affixType);
       this.links.classList.remove('links', 'links-top', 'links-bottom');
       this.links.classList.add(linksType);
+      //补充
+      let rulesLength = document.styleSheets[0].rules.length;
+      if (document.styleSheets[0].rules[rulesLength - 1].selectorText == '.links') {
+        document.styleSheets[0].deleteRule(rulesLength - 1);
+      }
+      document.styleSheets[0].addRule('.links', 'top:' + (this.element.clientHeight + 12) + 'px !important');
     }
     if (affix === 'bottom') {
       this.element.style.top = scrollHeight - height - offsetBottom + 'px';
@@ -71,7 +77,7 @@ var Affix = {
   }
 };
 
-NexT.utils.getAffixParam = function() {
+NexT.utils.getAffixParam = function () {
   const sidebarOffset = CONFIG.sidebar.offset || 12;
 
   let headerOffset = document.querySelector('.header-inner').offsetHeight;
@@ -80,12 +86,27 @@ NexT.utils.getAffixParam = function() {
   document.querySelector('.sidebar').style.marginTop = headerOffset + sidebarOffset + 'px';
 
   return {
-    top   : headerOffset,
+    top: headerOffset,
     bottom: footerOffset
   };
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-
-  Affix.init(document.querySelector('.sidebar-inner'), NexT.utils.getAffixParam());
+  let element = document.querySelector('.sidebar-inner')
+  Affix.init(element, NexT.utils.getAffixParam());
+  //监听dom
+  const options = {
+    childList: true,
+    attributes: true,
+    subtree: true,
+  }
+  // 创建MutationObserver实例，返回一个观察者对象
+  const mutation = new MutationObserver(function (mutationRecoards, observer) {
+    let rulesLength = document.styleSheets[0].rules.length;
+    if (document.styleSheets[0].rules[rulesLength - 1].selectorText == '.links') {
+      document.styleSheets[0].deleteRule(rulesLength - 1);
+    }
+    document.styleSheets[0].addRule('.links', 'top:' + (element.clientHeight + 12) + 'px !important');
+  })
+  mutation.observe(element, options);
 });
