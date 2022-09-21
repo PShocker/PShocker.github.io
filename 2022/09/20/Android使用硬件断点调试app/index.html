@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="对于一些有 crc 检测，而且注册了 sigaction 的 app 来说，通过异常的方式来追踪检测流程属实是太困难了，不过硬件断点解决了这个难题.  代码来源 rwProcMem33.  本文仅说明使用方法.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android使用硬件断点调试app">
+<meta property="og:url" content="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/index.html">
+<meta property="og:site_name" content="Shocker">
+<meta property="og:description" content="对于一些有 crc 检测，而且注册了 sigaction 的 app 来说，通过异常的方式来追踪检测流程属实是太困难了，不过硬件断点解决了这个难题.  代码来源 rwProcMem33.  本文仅说明使用方法.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/0.jpg">
+<meta property="article:published_time" content="2022-09-20T09:45:34.000Z">
+<meta property="article:modified_time" content="2022-09-21T06:17:29.378Z">
+<meta property="article:author" content="Shocker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/0.jpg">
+
+<link rel="canonical" href="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Android使用硬件断点调试app | Shocker</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Shocker</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.jpg">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="Shocker's Blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android使用硬件断点调试app
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-09-20 17:45:34" itemprop="dateCreated datePublished" datetime="2022-09-20T17:45:34+08:00">2022-09-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-09-21 14:17:29" itemprop="dateModified" datetime="2022-09-21T14:17:29+08:00">2022-09-21</time>
+              </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>对于一些有 crc 检测，而且注册了 sigaction 的 app 来说，通过异常的方式来追踪检测流程属实是太困难了，不过硬件断点解决了这个难题.<br>
+ 代码来源<a target="_blank" rel="noopener" href="https://github.com/abcz316/rwProcMem33"> rwProcMem33</a>.<br>
+ 本文仅说明使用方法.</p>
+<span id="more"></span>
+<h2 id="设置驱动访问权限及selinux"><a class="markdownIt-Anchor" href="#设置驱动访问权限及selinux"></a> 设置驱动访问权限及 selinux</h2>
+<p>参考<a target="_blank" rel="noopener" href="https://blog.xhyeax.com/2022/05/03/app-access-device-by-selinux-rule/">定制 SELinux 规则 允许 app 访问内核模块</a><br>
+首先加载模块，设置驱动权限</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">insmod /data/local/tmp/hwBreakpointProc1.ko</span><br><span class="line">chmod 666 /dev/hwBreakpointProc1</span><br></pre></td></tr></table></figure>
+<p>接下来可以关闭 selinux 或设置 sepolicy</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">关闭selinux</span></span><br><span class="line">setenforce 0 </span><br></pre></td></tr></table></figure>
+<p>或者</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">设置sepolicy</span></span><br><span class="line">magiskpolicy --live &quot;allow untrusted_app device chr_file &#123; read write ioctl open getattr map &#125;&quot;</span><br><span class="line">magiskpolicy --live &quot;attradd untrusted_app mlstrustedsubject&quot;</span><br></pre></td></tr></table></figure>
+<h2 id="app连接驱动设置断点"><a class="markdownIt-Anchor" href="#app连接驱动设置断点"></a> app 连接驱动，设置断点</h2>
+<p>连接驱动</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> err = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">if</span> (!driver.<span class="built_in">ConnectDriver</span>(err))</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;连接驱动失败\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>获取当前进程内所有线程 id, 因为硬件断点是针对线程的</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">std::vector&lt;<span class="type">int</span>&gt; vTask;</span><br><span class="line"><span class="built_in">GetProcessTask</span>(<span class="built_in">getpid</span>(), vTask);</span><br><span class="line"><span class="keyword">if</span> (vTask.<span class="built_in">size</span>() == <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;获取当前进程task失败\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>设置硬件断点</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">int</span> task : vTask)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">//打开task</span></span><br><span class="line">    <span class="type">uint64_t</span> hProcess = driver.<span class="built_in">OpenProcess</span>(task);</span><br><span class="line">    <span class="comment">// LOGD(&quot;调用驱动 OpenProcess(%d) 返回值:%lu&quot;, task, hProcess);</span></span><br><span class="line">    <span class="keyword">if</span> (!hProcess)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;调用驱动 OpenProcess 失败\n&quot;</span>);</span><br><span class="line">        <span class="built_in">fflush</span>(stdout);</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//设置进程硬件断点</span></span><br><span class="line">    <span class="type">uint64_t</span> hwBpHandle = driver.<span class="built_in">AddProcessHwBp</span>(hProcess, (<span class="type">uint64_t</span>)address,</span><br><span class="line">                                                HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_R);</span><br><span class="line">    <span class="comment">// LOGD(&quot;调用驱动 AddProcessHwBp(%lx) 返回值:%lu&quot;, address, hwBpHandle);</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (hwBpHandle)</span><br><span class="line">    &#123;</span><br><span class="line">        vHwBpHandle.<span class="built_in">push_back</span>(hwBpHandle);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//关闭task</span></span><br><span class="line">    driver.<span class="built_in">CloseHandle</span>(hProcess);</span><br><span class="line">    <span class="comment">// LOGD(&quot;调用驱动 CloseHandle:%lu&quot;, hProcess);</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="删除硬断读取硬件断点信息"><a class="markdownIt-Anchor" href="#删除硬断读取硬件断点信息"></a> 删除硬断，读取硬件断点信息</h2>
+<p>删除硬件断点</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;请等待2秒&quot;</span>);</span><br><span class="line"><span class="built_in">sleep</span>(<span class="number">2</span>);</span><br><span class="line"><span class="comment">// printf(&quot;==========================================================================\n&quot;);</span></span><br><span class="line"><span class="comment">//删除进程硬件断点</span></span><br><span class="line"><span class="keyword">for</span> (<span class="type">uint64_t</span> hwBpHandle : vHwBpHandle)</span><br><span class="line">&#123;</span><br><span class="line">    driver.<span class="built_in">DelProcessHwBp</span>(hwBpHandle);</span><br><span class="line">    <span class="comment">// printf(&quot;调用驱动 DelProcessHwBp(%&quot; PRIu64 &quot;)\n&quot;, hwBpHandle);</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>读取硬件断点命中信息</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="type">uint64_t</span> hwBpHandle : vHwBpHandle)</span><br><span class="line">&#123;</span><br><span class="line">    std::vector&lt;USER_HIT_INFO&gt; vHit;</span><br><span class="line">    BOOL b = driver.<span class="built_in">ReadHwBpInfo</span>(hwBpHandle, vHit);</span><br><span class="line"><span class="comment">//         printf(&quot;==========================================================================\n&quot;);</span></span><br><span class="line"><span class="comment">//         printf(&quot;调用驱动 ReadProcessHwBp(%&quot; PRIu64 &quot;) 返回值:%d\n&quot;, hwBpHandle, b);</span></span><br><span class="line">    <span class="keyword">for</span> (USER_HIT_INFO userhInfo : vHit)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;==========================================================================\n&quot;</span>);</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;硬件断点命中地址:%p,命中次数:%zu\n&quot;</span>, userhInfo.hit_addr, userhInfo.hit_count);</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> r = <span class="number">0</span>; r &lt; <span class="number">30</span>; r += <span class="number">5</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">LOGD</span>(<span class="string">&quot;\tX%-2d=%-12llx X%-2d=%-12llx X%-2d=%-12llx X%-2d=%-12llx X%-2d=%-12llx\n&quot;</span>,</span><br><span class="line">                    r, userhInfo.regs.regs[r],</span><br><span class="line">                    r + <span class="number">1</span>, userhInfo.regs.regs[r + <span class="number">1</span>],</span><br><span class="line">                    r + <span class="number">2</span>, userhInfo.regs.regs[r + <span class="number">2</span>],</span><br><span class="line">                    r + <span class="number">3</span>, userhInfo.regs.regs[r + <span class="number">3</span>],</span><br><span class="line">                    r + <span class="number">4</span>, userhInfo.regs.regs[r + <span class="number">4</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;\tLR=%-12llx SP=%-12llx PC=%-12llx\n&quot;</span>,</span><br><span class="line">                userhInfo.regs.regs[<span class="number">30</span>],</span><br><span class="line">                userhInfo.regs.sp,</span><br><span class="line">                userhInfo.regs.pc);</span><br><span class="line"></span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;\tprocess status:%-12llx orig_x0:%-12llx syscallno:%-12llx\n&quot;</span>,</span><br><span class="line">                userhInfo.regs.pstate,</span><br><span class="line">                userhInfo.regs.orig_x0,</span><br><span class="line">                userhInfo.regs.syscallno);</span><br><span class="line">        <span class="built_in">LOGD</span>(<span class="string">&quot;==========================================================================\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>清空硬件断点命中信息</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">driver.<span class="built_in">CleanHwBpInfo</span>();</span><br><span class="line"><span class="built_in">LOGD</span>(<span class="string">&quot;调用驱动 CleanHwBpInfo()\n&quot;</span>);</span><br></pre></td></tr></table></figure>
+<h2 id="硬件断点的分类"><a class="markdownIt-Anchor" href="#硬件断点的分类"></a> 硬件断点的分类</h2>
+<p>根据 rwProcMem33 大佬的代码来看<br>
+硬件断点分为以下几类</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span></span><br><span class="line">&#123;</span><br><span class="line">	HW_BREAKPOINT_EMPTY = <span class="number">0</span>, <span class="comment">//不知道有啥用</span></span><br><span class="line">	HW_BREAKPOINT_R = <span class="number">1</span>, <span class="comment">//读断点</span></span><br><span class="line">	HW_BREAKPOINT_W = <span class="number">2</span>, <span class="comment">//写断点</span></span><br><span class="line">	HW_BREAKPOINT_RW = HW_BREAKPOINT_R | HW_BREAKPOINT_W, <span class="comment">//读写断点</span></span><br><span class="line">	HW_BREAKPOINT_X = <span class="number">4</span>, <span class="comment">//执行断点</span></span><br><span class="line">	HW_BREAKPOINT_INVALID = HW_BREAKPOINT_RW | HW_BREAKPOINT_X, <span class="comment">//读写执行断点</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>硬件断点的长度为</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span></span><br><span class="line">&#123;</span><br><span class="line">	HW_BREAKPOINT_LEN_1 = <span class="number">1</span>, <span class="comment">//1字节</span></span><br><span class="line">	HW_BREAKPOINT_LEN_2 = <span class="number">2</span>, <span class="comment">//2字节</span></span><br><span class="line">	HW_BREAKPOINT_LEN_4 = <span class="number">4</span>, <span class="comment">//4字节</span></span><br><span class="line">	HW_BREAKPOINT_LEN_8 = <span class="number">8</span>, <span class="comment">//8字节</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>硬件断点的设置</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">driver.<span class="built_in">AddProcessHwBp</span>(hProcess, (<span class="type">uint64_t</span>)address, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_R);</span><br></pre></td></tr></table></figure>
+<p>其中，hProcess 是从内核中拿到的线程句柄，address 为断点地址，HW_BREAKPOINT_LEN_4 为断点长度，HW_BREAKPOINT_R 为断点分类</p>
+<h2 id="最后"><a class="markdownIt-Anchor" href="#最后"></a> 最后</h2>
+<p>项目测试 app Github 地址:<br>
+<strong><a target="_blank" rel="noopener" href="https://github.com/PShocker/HwBpApp">https://github.com/PShocker/HwBpApp</a></strong></p>
+<p>Releases:<br>
+<strong><a target="_blank" rel="noopener" href="https://github.com/PShocker/PShocker.github.io/releases/tag/HwBpApp">https://github.com/PShocker/PShocker.github.io/releases/tag/HwBpApp</a></strong></p>
+<p><img src="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/0.jpg" alt></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Shocker
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/" title="Android使用硬件断点调试app">https://pshocker.github.io/2022/09/20/Android使用硬件断点调试app/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/08/05/Magisk%E5%86%85%E5%B5%8C%E9%A9%B1%E5%8A%A8%E6%A8%A1%E5%9D%97%E4%B8%94%E5%90%AF%E5%8A%A8%E5%8A%A0%E8%BD%BD/" rel="prev" title="Magisk内嵌驱动模块且启动加载">
+      <i class="fa fa-chevron-left"></i> Magisk内嵌驱动模块且启动加载
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview" style="display: none;">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E9%A9%B1%E5%8A%A8%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90%E5%8F%8Aselinux"><span class="nav-number">1.</span> <span class="nav-text"> 设置驱动访问权限及 selinux</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#app%E8%BF%9E%E6%8E%A5%E9%A9%B1%E5%8A%A8%E8%AE%BE%E7%BD%AE%E6%96%AD%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text"> app 连接驱动，设置断点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%A0%E9%99%A4%E7%A1%AC%E6%96%AD%E8%AF%BB%E5%8F%96%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E4%BF%A1%E6%81%AF"><span class="nav-number">3.</span> <span class="nav-text"> 删除硬断，读取硬件断点信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E7%9A%84%E5%88%86%E7%B1%BB"><span class="nav-number">4.</span> <span class="nav-text"> 硬件断点的分类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-number">5.</span> <span class="nav-text"> 最后</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <a href="https://pshocker.github.io/">
+    <img class="site-author-image" itemprop="image" alt="Shocker"
+      src="/images/test.jpg">
+      </a>
+  <!-- <p class="site-author-name" itemprop="name">Shocker</p> -->
+  <a href="https://pshocker.github.io/">
+  <div class="site-description" itemprop="description">Shocker's Blog</div>
+  </a>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/PShocker" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;PShocker" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.52pojie.cn/home.php?mod=space&uid=1294626" title="52pojie → https:&#x2F;&#x2F;www.52pojie.cn&#x2F;home.php?mod&#x3D;space&amp;uid&#x3D;1294626" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>52pojie</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友链
+    </div>
+    <ul class="links-of-blogroll-list">
+      <a target="_blank" rel="noopener" href="https://blog.hongqing.online/">
+      <img class="site-author-image" itemprop="image" src="/images/hq.jpg">
+      </a>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.hongqing.online/" title="https:&#x2F;&#x2F;blog.hongqing.online&#x2F;" rel="noopener" target="_blank">Ssage Paruders</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+    </div>
+     <!-- 补充-->
+     <div class="sidebar-inner sidebar-links" style="opacity: 1;margin-top: 15px;">
+    <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <a href="https://pshocker.github.io/">
+    <img class="site-author-image" itemprop="image" alt="Shocker"
+      src="/images/test.jpg">
+      </a>
+  <!-- <p class="site-author-name" itemprop="name">Shocker</p> -->
+  <a href="https://pshocker.github.io/">
+  <div class="site-description" itemprop="description">Shocker's Blog</div>
+  </a>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/PShocker" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;PShocker" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.52pojie.cn/home.php?mod=space&uid=1294626" title="52pojie → https:&#x2F;&#x2F;www.52pojie.cn&#x2F;home.php?mod&#x3D;space&amp;uid&#x3D;1294626" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>52pojie</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友链
+    </div>
+    <ul class="links-of-blogroll-list">
+      <a target="_blank" rel="noopener" href="https://blog.hongqing.online/">
+      <img class="site-author-image" itemprop="image" src="/images/hq.jpg">
+      </a>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.hongqing.online/" title="https:&#x2F;&#x2F;blog.hongqing.online&#x2F;" rel="noopener" target="_blank">Ssage Paruders</a>
+        </li>
+    </ul>
+  </div>
+     </div>
+     <!--友链和自己头像-->
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shocker</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '311d95486d7591ee95b1',
+      clientSecret: 'c25c194ac34fcb225b718421576760288c69a0bd',
+      repo        : 'PShocker.github.io',
+      owner       : 'PShocker',
+      admin       : ['PShocker'],
+      id          : '72ca9f9a70a1f0d482028ff1a410dd2b',
+        language: 'zh-CN',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
