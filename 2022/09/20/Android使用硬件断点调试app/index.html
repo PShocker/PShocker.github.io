@@ -30,7 +30,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/0.jpg">
 <meta property="article:published_time" content="2022-09-20T09:45:34.000Z">
-<meta property="article:modified_time" content="2022-09-21T06:17:29.378Z">
+<meta property="article:modified_time" content="2022-09-21T06:22:45.606Z">
 <meta property="article:author" content="Shocker">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://pshocker.github.io/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/0.jpg">
@@ -188,7 +188,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-09-21 14:17:29" itemprop="dateModified" datetime="2022-09-21T14:17:29+08:00">2022-09-21</time>
+                <time title="修改时间：2022-09-21 14:22:45" itemprop="dateModified" datetime="2022-09-21T14:22:45+08:00">2022-09-21</time>
               </span>
 
           
@@ -216,11 +216,11 @@
 <h2 id="设置驱动访问权限及selinux"><a class="markdownIt-Anchor" href="#设置驱动访问权限及selinux"></a> 设置驱动访问权限及 selinux</h2>
 <p>参考<a target="_blank" rel="noopener" href="https://blog.xhyeax.com/2022/05/03/app-access-device-by-selinux-rule/">定制 SELinux 规则 允许 app 访问内核模块</a><br>
 首先加载模块，设置驱动权限</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">insmod /data/local/tmp/hwBreakpointProc1.ko</span><br><span class="line">chmod 666 /dev/hwBreakpointProc1</span><br></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">insmod /data/local/tmp/hwBreakpointProc1.ko</span><br><span class="line"><span class="built_in">chmod</span> 666 /dev/hwBreakpointProc1</span><br></pre></td></tr></table></figure>
 <p>接下来可以关闭 selinux 或设置 sepolicy</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">关闭selinux</span></span><br><span class="line">setenforce 0 </span><br></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#关闭selinux</span></span><br><span class="line">setenforce 0 </span><br></pre></td></tr></table></figure>
 <p>或者</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">设置sepolicy</span></span><br><span class="line">magiskpolicy --live &quot;allow untrusted_app device chr_file &#123; read write ioctl open getattr map &#125;&quot;</span><br><span class="line">magiskpolicy --live &quot;attradd untrusted_app mlstrustedsubject&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#设置sepolicy</span></span><br><span class="line">magiskpolicy --live <span class="string">&quot;allow untrusted_app device chr_file &#123; read write ioctl open getattr map &#125;&quot;</span></span><br><span class="line">magiskpolicy --live <span class="string">&quot;attradd untrusted_app mlstrustedsubject&quot;</span></span><br></pre></td></tr></table></figure>
 <h2 id="app连接驱动设置断点"><a class="markdownIt-Anchor" href="#app连接驱动设置断点"></a> app 连接驱动，设置断点</h2>
 <p>连接驱动</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> err = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">if</span> (!driver.<span class="built_in">ConnectDriver</span>(err))</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">LOGD</span>(<span class="string">&quot;连接驱动失败\n&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">nullptr</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -243,7 +243,7 @@
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">enum</span></span><br><span class="line">&#123;</span><br><span class="line">	HW_BREAKPOINT_LEN_1 = <span class="number">1</span>, <span class="comment">//1字节</span></span><br><span class="line">	HW_BREAKPOINT_LEN_2 = <span class="number">2</span>, <span class="comment">//2字节</span></span><br><span class="line">	HW_BREAKPOINT_LEN_4 = <span class="number">4</span>, <span class="comment">//4字节</span></span><br><span class="line">	HW_BREAKPOINT_LEN_8 = <span class="number">8</span>, <span class="comment">//8字节</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 <p>硬件断点的设置</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">driver.<span class="built_in">AddProcessHwBp</span>(hProcess, (<span class="type">uint64_t</span>)address, HW_BREAKPOINT_LEN_4, HW_BREAKPOINT_R);</span><br></pre></td></tr></table></figure>
-<p>其中，hProcess 是从内核中拿到的线程句柄，address 为断点地址，HW_BREAKPOINT_LEN_4 为断点长度，HW_BREAKPOINT_R 为断点分类</p>
+<p>其中，<strong>hProcess</strong> 是从内核中拿到的线程句柄，<strong>address</strong> 为断点地址，<strong>HW_BREAKPOINT_LEN_4</strong> 为断点长度，<strong>HW_BREAKPOINT_R</strong> 为断点分类.</p>
 <h2 id="最后"><a class="markdownIt-Anchor" href="#最后"></a> 最后</h2>
 <p>项目测试 app Github 地址:<br>
 <strong><a target="_blank" rel="noopener" href="https://github.com/PShocker/HwBpApp">https://github.com/PShocker/HwBpApp</a></strong></p>
