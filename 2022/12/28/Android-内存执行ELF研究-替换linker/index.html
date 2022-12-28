@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.1.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"pshocker.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="参考 [原创] Android 内存执行 ELF 研究">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android-内存执行ELF研究-替换linker">
+<meta property="og:url" content="https://pshocker.github.io/2022/12/28/Android-%E5%86%85%E5%AD%98%E6%89%A7%E8%A1%8CELF%E7%A0%94%E7%A9%B6-%E6%9B%BF%E6%8D%A2linker/index.html">
+<meta property="og:site_name" content="Shocker">
+<meta property="og:description" content="参考 [原创] Android 内存执行 ELF 研究">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2022-12-28T08:14:24.000Z">
+<meta property="article:modified_time" content="2022-12-28T09:08:37.322Z">
+<meta property="article:author" content="Shocker">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://pshocker.github.io/2022/12/28/Android-%E5%86%85%E5%AD%98%E6%89%A7%E8%A1%8CELF%E7%A0%94%E7%A9%B6-%E6%9B%BF%E6%8D%A2linker/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Android-内存执行ELF研究-替换linker | Shocker</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Shocker</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://pshocker.github.io/2022/12/28/Android-%E5%86%85%E5%AD%98%E6%89%A7%E8%A1%8CELF%E7%A0%94%E7%A9%B6-%E6%9B%BF%E6%8D%A2linker/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/test.jpg">
+      <meta itemprop="name" content="Shocker">
+      <meta itemprop="description" content="Shocker's Blog">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Shocker">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android-内存执行ELF研究-替换linker
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-12-28 16:14:24 / 修改时间：17:08:37" itemprop="dateCreated datePublished" datetime="2022-12-28T16:14:24+08:00">2022-12-28</time>
+            </span>
+
+          
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>参考<a target="_blank" rel="noopener" href="https://bbs.pediy.com/thread-275261.htm"> [原创] Android 内存执行 ELF 研究</a></p>
+<span id="more"></span>
+<p><strong>环境</strong><br>
+ 1. 小米 12pro<br>
+2. 安卓 12<br>
+3. 内核 5.10</p>
+<h1 id="修改linker"><a class="markdownIt-Anchor" href="#修改linker"></a> 修改 linker</h1>
+<h2 id="补充ldconfigtxt"><a class="markdownIt-Anchor" href="#补充ldconfigtxt"></a> 补充 ld.config.txt</h2>
+<p>由于是直接编译 linker, 因此可以不修改 ld.config.txt, 完成同样的效果</p>
+<p><a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/bionic/linker/linker_config.cpp#182">http://aospxref.com/android-12.0.0_r3/xref/bionic/linker/linker_config.cpp#182</a></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">186</span>    std::string content;</span><br><span class="line"><span class="number">187</span>    <span class="keyword">if</span> (!android::base::<span class="built_in">ReadFileToString</span>(ld_config_file_path, &amp;content)) &#123;</span><br><span class="line"><span class="number">188</span>      <span class="keyword">if</span> (errno != ENOENT) &#123;</span><br><span class="line"><span class="number">189</span>        *error_msg = std::<span class="built_in">string</span>(<span class="string">&quot;error reading file \&quot;&quot;</span>) +</span><br><span class="line"><span class="number">190</span>                     ld_config_file_path + <span class="string">&quot;\&quot;: &quot;</span> + <span class="built_in">strerror</span>(errno);</span><br><span class="line"><span class="number">191</span>      &#125;</span><br><span class="line"><span class="number">192</span>      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line"><span class="number">193</span>    &#125;</span><br><span class="line"><span class="number">194</span>  </span><br><span class="line"><span class="number">195</span>    <span class="function">ConfigParser <span class="title">cp</span><span class="params">(std::move(content))</span></span>;</span><br></pre></td></tr></table></figure>
+<p>186 行的 content 就是从 ld.config.txt 读取到的内容，只需要追加 <code>dir.unrestricted = /memfd:/\n</code>  即可</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//add extern name,下面的代码加在194行里</span></span><br><span class="line">std::string s&#123;<span class="string">&quot;dir.unrestricted = /memfd:/\n&quot;</span>&#125;;</span><br><span class="line">content=s+content;</span><br></pre></td></tr></table></figure>
+<h2 id="修改access返回值"><a class="markdownIt-Anchor" href="#修改access返回值"></a> 修改 access 返回值</h2>
+<p><a target="_blank" rel="noopener" href="http://aospxref.com/android-12.0.0_r3/xref/bionic/linker/linker_config.cpp#242">http://aospxref.com/android-12.0.0_r3/xref/bionic/linker/linker_config.cpp#242</a></p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">242</span>        <span class="keyword">if</span> (<span class="built_in">access</span>(value.<span class="built_in">c_str</span>(), R_OK) != <span class="number">0</span>) &#123;</span><br><span class="line"><span class="number">243</span>          <span class="keyword">if</span> (errno == ENOENT) &#123;</span><br><span class="line"><span class="number">244</span>            <span class="comment">// no need to test for non-existing path. skip.</span></span><br><span class="line"><span class="number">245</span>            <span class="keyword">continue</span>;</span><br><span class="line"><span class="number">246</span>          &#125;</span><br></pre></td></tr></table></figure>
+<p>补充一个条件判断就行</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//加在242行下面</span></span><br><span class="line">std::string memfd_path&#123;<span class="string">&quot;/memfd:&quot;</span>&#125;;</span><br><span class="line"><span class="keyword">if</span> (value.<span class="built_in">substr</span>(<span class="number">0</span>,<span class="number">7</span>).<span class="built_in">compare</span>(memfd_path)!=<span class="number">0</span>&amp;&amp;errno == ENOENT) &#123;</span><br><span class="line">    <span class="keyword">continue</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="最后"><a class="markdownIt-Anchor" href="#最后"></a> 最后</h2>
+<p>把编译好的 linker64 用 zygisk 替换就行，测试用例</p>
+<p><strong><a target="_blank" rel="noopener" href="https://github.com/PShocker/memexec/releases/tag/1.0">https://github.com/PShocker/memexec/releases/tag/1.0</a></strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>本文作者： </strong>Shocker
+  </li>
+  <li class="post-copyright-link">
+    <strong>本文链接：</strong>
+    <a href="https://pshocker.github.io/2022/12/28/Android-%E5%86%85%E5%AD%98%E6%89%A7%E8%A1%8CELF%E7%A0%94%E7%A9%B6-%E6%9B%BF%E6%8D%A2linker/" title="Android-内存执行ELF研究-替换linker">https://pshocker.github.io/2022/12/28/Android-内存执行ELF研究-替换linker/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/09/20/Android%E4%BD%BF%E7%94%A8%E7%A1%AC%E4%BB%B6%E6%96%AD%E7%82%B9%E8%B0%83%E8%AF%95app/" rel="prev" title="Android使用硬件断点调试app">
+      <i class="fa fa-chevron-left"></i> Android使用硬件断点调试app
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview" style="display: none;">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9linker"><span class="nav-number">1.</span> <span class="nav-text"> 修改 linker</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A5%E5%85%85ldconfigtxt"><span class="nav-number">1.1.</span> <span class="nav-text"> 补充 ld.config.txt</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9access%E8%BF%94%E5%9B%9E%E5%80%BC"><span class="nav-number">1.2.</span> <span class="nav-text"> 修改 access 返回值</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E5%90%8E"><span class="nav-number">1.3.</span> <span class="nav-text"> 最后</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <a href="https://pshocker.github.io/">
+    <img class="site-author-image" itemprop="image" alt="Shocker"
+      src="/images/test.jpg">
+      </a>
+  <!-- <p class="site-author-name" itemprop="name">Shocker</p> -->
+  <a href="https://pshocker.github.io/">
+  <div class="site-description" itemprop="description">Shocker's Blog</div>
+  </a>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/PShocker" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;PShocker" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.52pojie.cn/home.php?mod=space&uid=1294626" title="52pojie → https:&#x2F;&#x2F;www.52pojie.cn&#x2F;home.php?mod&#x3D;space&amp;uid&#x3D;1294626" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>52pojie</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友链
+    </div>
+    <ul class="links-of-blogroll-list">
+      <a target="_blank" rel="noopener" href="https://blog.hongqing.online/">
+      <img class="site-author-image" itemprop="image" src="/images/hq.jpg">
+      </a>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.hongqing.online/" title="https:&#x2F;&#x2F;blog.hongqing.online&#x2F;" rel="noopener" target="_blank">Ssage Paruders</a>
+        </li>
+    </ul>
+  </div>
+
+      </div>
+    </div>
+     <!-- 补充-->
+     <div class="sidebar-inner sidebar-links" style="opacity: 1;margin-top: 15px;">
+    <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <a href="https://pshocker.github.io/">
+    <img class="site-author-image" itemprop="image" alt="Shocker"
+      src="/images/test.jpg">
+      </a>
+  <!-- <p class="site-author-name" itemprop="name">Shocker</p> -->
+  <a href="https://pshocker.github.io/">
+  <div class="site-description" itemprop="description">Shocker's Blog</div>
+  </a>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/PShocker" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;PShocker" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.52pojie.cn/home.php?mod=space&uid=1294626" title="52pojie → https:&#x2F;&#x2F;www.52pojie.cn&#x2F;home.php?mod&#x3D;space&amp;uid&#x3D;1294626" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>52pojie</a>
+      </span>
+  </div>
+
+
+  <div class="links-of-blogroll motion-element">
+    <div class="links-of-blogroll-title"><i class="fa fa-link fa-fw"></i>
+      友链
+    </div>
+    <ul class="links-of-blogroll-list">
+      <a target="_blank" rel="noopener" href="https://blog.hongqing.online/">
+      <img class="site-author-image" itemprop="image" src="/images/hq.jpg">
+      </a>
+        <li class="links-of-blogroll-item">
+          <a href="https://blog.hongqing.online/" title="https:&#x2F;&#x2F;blog.hongqing.online&#x2F;" rel="noopener" target="_blank">Ssage Paruders</a>
+        </li>
+    </ul>
+  </div>
+     </div>
+     <!--友链和自己头像-->
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Shocker</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.css">
+
+<script>
+NexT.utils.loadComments(document.querySelector('#gitalk-container'), () => {
+  NexT.utils.getScript('//cdnjs.cloudflare.com/ajax/libs/gitalk/1.7.2/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '311d95486d7591ee95b1',
+      clientSecret: 'c25c194ac34fcb225b718421576760288c69a0bd',
+      repo        : 'PShocker.github.io',
+      owner       : 'PShocker',
+      admin       : ['PShocker'],
+      id          : '1584269c3de439788d107b404b4907b1',
+        language: 'zh-CN',
+      distractionFreeMode: false
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
